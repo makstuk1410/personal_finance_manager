@@ -451,4 +451,410 @@ The AI assistant should use the application's financial data and calculations ra
 
 ---
 
+# Use Cases
 
+## 1. Authentication
+
+### Use Case Diagram
+
+```mermaid
+flowchart LR
+    User((User))
+
+    subgraph Authentication
+        Register([Register account])
+        Login([Log in])
+        Logout([Log out])
+    end
+
+    User --> Register
+    User --> Login
+    User --> Logout
+```
+
+### Use Cases
+
+* **UC-01** — Register account
+* **UC-02** — Log in
+* **UC-03** — Log out
+
+---
+
+## 2. Financial Accounts
+
+### Use Case Diagram
+
+```mermaid
+flowchart LR
+    User((User))
+
+    subgraph Financial Accounts
+        Create([Create account])
+        View([View accounts])
+        Edit([Edit account])
+        Delete([Delete account])
+    end
+
+    User --> Create
+    User --> View
+    User --> Edit
+    User --> Delete
+```
+
+### Use Cases
+
+* **UC-04** — Create account
+* **UC-05** — View accounts
+* **UC-06** — Edit account
+* **UC-07** — Delete account
+
+---
+
+## 3. Transactions
+
+### Use Case Diagram
+
+```mermaid
+flowchart LR
+    User((User))
+
+    subgraph Transactions
+        Add([Add transaction])
+        View([View transactions])
+        Edit([Edit transaction])
+        Delete([Delete transaction])
+        Filter([Filter transactions])
+        Sort([Sort transactions])
+    end
+
+    User --> Add
+    User --> View
+    User --> Edit
+    User --> Delete
+    User --> Filter
+    User --> Sort
+```
+
+### Use Cases
+
+* **UC-08** — Add transaction
+* **UC-09** — View transactions
+* **UC-10** — Edit transaction
+* **UC-11** — Delete transaction
+* **UC-12** — Filter transactions
+* **UC-13** — Sort transactions
+
+---
+
+## 4. Categories
+
+### Use Case Diagram
+
+```mermaid
+flowchart LR
+    User((User))
+
+    subgraph Categories
+        Create([Create category])
+        View([View categories])
+        Edit([Edit category])
+        Delete([Delete category])
+        Assign([Assign category to transaction])
+    end
+
+    User --> Create
+    User --> View
+    User --> Edit
+    User --> Delete
+    User --> Assign
+```
+
+### Use Cases
+
+* **UC-14** — Create category
+* **UC-15** — View categories
+* **UC-16** — Edit category
+* **UC-17** — Delete category
+* **UC-18** — Assign category to transaction
+
+---
+
+## 5. Dashboard
+
+### Use Case Diagram
+
+```mermaid
+flowchart LR
+    User((User))
+
+    subgraph Dashboard
+        View([View dashboard])
+        SelectPeriod([Select analysis period])
+    end
+
+    User --> View
+    User --> SelectPeriod
+```
+
+### Use Cases
+
+* **UC-19** — View dashboard
+* **UC-20** — Select analysis period
+
+---
+
+## 6. Financial Statistics
+
+### Use Case Diagram
+
+```mermaid
+flowchart LR
+    User((User))
+
+    subgraph Financial Statistics
+        ViewIncome([View income statistics])
+        ViewExpenses([View expense statistics])
+        ViewSavings([View savings statistics])
+        ViewCategories([View spending by category])
+        Compare([Compare financial periods])
+    end
+
+    User --> ViewIncome
+    User --> ViewExpenses
+    User --> ViewSavings
+    User --> ViewCategories
+    User --> Compare
+```
+
+### Use Cases
+
+* **UC-21** — View income statistics
+* **UC-22** — View expense statistics
+* **UC-23** — View savings statistics
+* **UC-24** — View spending by category
+* **UC-25** — Compare financial periods
+
+---
+
+## 7. Budgets
+
+### Use Case Diagram
+
+```mermaid
+flowchart LR
+    User((User))
+
+    subgraph Budgets
+        Create([Create budget])
+        View([View budgets])
+        Edit([Edit budget])
+        Delete([Delete budget])
+        Track([Track budget usage])
+    end
+
+    User --> Create
+    User --> View
+    User --> Edit
+    User --> Delete
+    User --> Track
+```
+
+### Use Cases
+
+* **UC-26** — Create budget
+* **UC-27** — View budgets
+* **UC-28** — Edit budget
+* **UC-29** — Delete budget
+* **UC-30** — Track budget usage
+
+---
+
+## 8. Savings Goals
+
+### Use Case Diagram
+
+```mermaid
+flowchart LR
+    User((User))
+
+    subgraph Savings Goals
+        Create([Create savings goal])
+        View([View savings goals])
+        Edit([Edit savings goal])
+        Delete([Delete savings goal])
+        Track([Track goal progress])
+        Estimate([Estimate goal achievability])
+    end
+
+    User --> Create
+    User --> View
+    User --> Edit
+    User --> Delete
+    User --> Track
+    User --> Estimate
+```
+
+### Use Cases
+
+* **UC-31** — Create savings goal
+* **UC-32** — View savings goals
+* **UC-33** — Edit savings goal
+* **UC-34** — Delete savings goal
+* **UC-35** — Track goal progress
+* **UC-36** — Estimate goal achievability
+
+---
+
+## 9. Financial What-If Simulator
+
+### Use Case Diagram
+
+```mermaid
+flowchart LR
+    User((User))
+
+    subgraph What-If Simulator
+        Create([Create scenario])
+        Modify([Modify scenario parameters])
+        Run([Run simulation])
+        View([View projection])
+        Compare([Compare with current situation])
+        GoalImpact([Analyze goal impact])
+        BudgetImpact([Analyze budget impact])
+        Reset([Reset scenario])
+    end
+
+    User --> Create
+    User --> Modify
+    User --> Run
+    User --> View
+    User --> Compare
+    User --> GoalImpact
+    User --> BudgetImpact
+    User --> Reset
+```
+
+### Use Cases
+
+* **UC-37** — Create financial scenario
+* **UC-38** — Modify scenario parameters
+* **UC-39** — Run financial simulation
+* **UC-40** — View financial projection
+* **UC-41** — Compare scenario with current situation
+* **UC-42** — Analyze impact on savings goals
+* **UC-43** — Analyze impact on budgets
+* **UC-44** — Reset scenario
+
+
+# Glossary
+
+| Term                             | Definition                                                                                                                                      |
+| -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| **User**                         | A person who uses the Personal Finance Manager application and manages their own financial data.                                                |
+| **Financial Account**            | A representation of a source or destination of money managed by the user, such as a bank account, cash wallet, credit card, or savings account. |
+| **Transaction**                  | A financial operation that changes the balance of an account. A transaction can represent income, expense, or transfer.                         |
+| **Income**                       | Money received by the user, such as salary, scholarship, or other earnings.                                                                     |
+| **Expense**                      | Money spent by the user on goods, services, or other purposes.                                                                                  |
+| **Transfer**                     | A movement of money between two financial accounts belonging to the user.                                                                       |
+| **Category**                     | A label used to classify transactions, such as Food, Transport, or Entertainment.                                                               |
+| **Budget**                       | A spending limit defined by the user for a specific category and period.                                                                        |
+| **Savings Goal**                 | A financial target that the user wants to achieve by saving a specified amount of money before a defined deadline.                              |
+| **Financial Scenario**           | A hypothetical modification of the user's financial situation used by the What-If Simulator without changing actual financial data.             |
+| **What-If Simulator**            | A system component that allows users to simulate hypothetical financial scenarios and analyze their potential impact on their finances.         |
+| **Financial Projection**         | An estimated future financial state calculated from the user's current financial data and a selected financial scenario.                        |
+| **Current Financial Situation**  | The user's actual financial state calculated from their current accounts, transactions, budgets, and savings goals.                             |
+| **Analysis Period**              | A selected time range used for calculating and displaying financial statistics.                                                                 |
+| **Financial Statistics**         | Calculated information describing the user's financial activity, such as income, expenses, savings, and spending by category.                   |
+| **Savings**                      | The difference between the user's income and expenses for a specified period.                                                                   |
+| **Account Balance**              | The current amount of money available in a financial account.                                                                                   |
+| **Transaction History**          | A collection of financial transactions recorded by the user.                                                                                    |
+| **MVP (Minimum Viable Product)** | The initial version of the application containing the minimum set of features required to provide its core functionality.                       |
+| **Hypothetical Scenario**        | A set of temporary financial changes used for simulation and analysis without modifying the user's actual financial data.                       |
+
+
+# Domain Model
+
+The Domain Model describes the main concepts of the Personal Finance Manager domain and the relationships between them.
+
+The model is based on the functional requirements and glossary defined for the application.
+
+## Domain Model Diagram
+
+```mermaid
+classDiagram
+
+    class User {
+        +id
+        +email
+    }
+
+    class FinancialAccount {
+        +id
+        +name
+        +type
+        +balance
+        +currency
+    }
+
+    class Transaction {
+        +id
+        +amount
+        +type
+        +date
+        +description
+    }
+
+    class Category {
+        +id
+        +name
+        +isDefault
+    }
+
+    class Budget {
+        +id
+        +spendingLimit
+        +startDate
+        +endDate
+    }
+
+    class SavingsGoal {
+        +id
+        +name
+        +targetAmount
+        +currentAmount
+        +deadline
+    }
+
+    class FinancialScenario {
+        +id
+        +name
+        +monthlyIncome
+        +housingExpenses
+        +foodExpenses
+        +entertainmentExpenses
+        +otherRecurringExpenses
+    }
+
+    class FinancialProjection {
+        +projectedIncome
+        +projectedExpenses
+        +projectedSavings
+        +projectedBalance
+    }
+
+    User "1" --> "0..*" FinancialAccount : owns
+    User "1" --> "0..*" Transaction : creates
+    User "1" --> "0..*" Budget : creates
+    User "1" --> "0..*" SavingsGoal : creates
+    User "1" --> "0..*" FinancialScenario : creates
+
+    FinancialAccount "1" --> "0..*" Transaction : contains
+    Transaction "0..*" --> "0..1" Category : belongs to
+
+    Budget "0..*" --> "1" Category : applies to
+
+    FinancialScenario "1" --> "1" FinancialProjection : produces
+
+    Transaction "0..*" --> "1" FinancialAccount : source account
+    Transaction "0..*" --> "0..1" FinancialAccount : destination account
+```
