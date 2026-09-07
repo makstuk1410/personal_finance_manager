@@ -6,7 +6,7 @@ The database design is derived from the Domain Model and Functional Requirements
 
 ## 1. Database Overview
 
-The database will contain the following main entities:
+The MVP database contains the following main entities:
 
 * User
 * Financial Account
@@ -15,9 +15,8 @@ The database will contain the following main entities:
 * Budget
 * Savings Goal
 * Financial Scenario
-* Financial Projection
 
-The database will use a relational structure with foreign keys to maintain relationships between entities.
+The database uses a relational structure with foreign keys to maintain relationships between entities.
 
 ## 2. Entity Relationship Diagram
 
@@ -35,8 +34,6 @@ erDiagram
     CATEGORY ||--o{ TRANSACTION : classifies
     CATEGORY ||--o{ BUDGET : applies_to
 
-    FINANCIAL_SCENARIO ||--|| FINANCIAL_PROJECTION : produces
-
     USER {
         uuid id PK
         string email UK
@@ -48,6 +45,7 @@ erDiagram
         uuid user_id FK
         string name
         string type
+        decimal initial_balance
         decimal balance
         string currency
     }
@@ -99,22 +97,13 @@ erDiagram
         decimal entertainment_expenses
         decimal other_recurring_expenses
     }
-
-    FINANCIAL_PROJECTION {
-        uuid id PK
-        uuid scenario_id FK
-        decimal projected_income
-        decimal projected_expenses
-        decimal projected_savings
-        decimal projected_balance
-    }
 ```
 
 ## 3. Tables
 
 ### 3.1 User
 
-Stores user authentication and account information.
+Stores user authentication information.
 
 | Column          | Type    | Constraints      |
 | --------------- | ------- | ---------------- |
@@ -128,14 +117,15 @@ Stores user authentication and account information.
 
 Stores financial accounts belonging to users.
 
-| Column     | Type    | Constraints        |
-| ---------- | ------- | ------------------ |
-| `id`       | UUID    | Primary Key        |
-| `user_id`  | UUID    | Foreign Key → User |
-| `name`     | VARCHAR | NOT NULL           |
-| `type`     | VARCHAR | NOT NULL           |
-| `balance`  | DECIMAL | NOT NULL           |
-| `currency` | VARCHAR | NOT NULL           |
+| Column            | Type    | Constraints                  |
+| ----------------- | ------- | ---------------------------- |
+| `id`              | UUID    | Primary Key                  |
+| `user_id`         | UUID    | Foreign Key → User, NOT NULL |
+| `name`            | VARCHAR | NOT NULL                     |
+| `type`            | VARCHAR | NOT NULL                     |
+| `initial_balance` | DECIMAL | NOT NULL                     |
+| `balance`         | DECIMAL | NOT NULL                     |
+| `currency`        | VARCHAR | NOT NULL                     |
 
 Supported account types:
 
@@ -143,6 +133,10 @@ Supported account types:
 * Bank account
 * Credit card
 * Savings account
+
+`initial_balance` represents the balance of the account when it was created.
+
+`balance` represents its current balance and is updated when transactions are created, modified, or deleted.
 
 ---
 
@@ -153,7 +147,7 @@ Stores income, expense, and transfer operations.
 | Column                   | Type    | Constraints                           |
 | ------------------------ | ------- | ------------------------------------- |
 | `id`                     | UUID    | Primary Key                           |
-| `user_id`                | UUID    | Foreign Key → User                    |
+| `user_id`                | UUID    | Foreign Key → User, NOT NULL          |
 | `source_account_id`      | UUID    | Foreign Key → Financial Account, NULL |
 | `destination_account_id` | UUID    | Foreign Key → Financial Account, NULL |
 | `category_id`            | UUID    | Foreign Key → Category, NULL          |
@@ -162,21 +156,29 @@ Stores income, expense, and transfer operations.
 | `date`                   | DATE    | NOT NULL                              |
 | `description`            | VARCHAR | NULL                                  |
 
-The account relationships depend on the transaction type:
+Transaction types:
 
-| Transaction Type | Source Account | Destination Account | Category |
-| ---------------- | -------------- | ------------------- | -------- |
-| Income           | NULL           | Required            | Optional |
-| Expense          | Required       | NULL                | Required |
-| Transfer         | Required       | Required            | NULL     |
+* Income
+* Expense
+* Transfer
 
-This structure allows transfers to move money between two accounts without treating the transfer as income or expense.
+The account and category requirements depend on the transaction type:
+
+| Type     | Source Account | Destination Account | Category |
+| -------- | -------------- | ------------------- | -------- |
+| Income   | NULL           | Required            | Optional |
+| Expense  | Required       | NULL                | Required |
+| Transfer | Required       | Required            | NULL     |
+
+A transfer cannot use the same account as both the source and destination.
+
+The `user_id` must match the owner of the accounts referenced by the transaction.
 
 ---
 
 ### 3.4 Category
 
-Stores transaction categories.
+Stores predefined and custom transaction categories.
 
 | Column       | Type    | Constraints                                     |
 | ------------ | ------- | ----------------------------------------------- |
@@ -197,7 +199,11 @@ Default categories include:
 * Subscriptions
 * Other
 
+Default categories are available to users without being owned by a specific user.
+
 Custom categories belong to the user who created them.
+
+A user should not be able to create duplicate category names within their own categories.
 
 ---
 
@@ -205,16 +211,16 @@ Custom categories belong to the user who created them.
 
 Stores spending limits defined for categories and periods.
 
-| Column           | Type    | Constraints            |
-| ---------------- | ------- | ---------------------- |
-| `id`             | UUID    | Primary Key            |
-| `user_id`        | UUID    | Foreign Key → User     |
-| `category_id`    | UUID    | Foreign Key → Category |
-| `spending_limit` | DECIMAL | NOT NULL               |
-| `start_date`     | DATE    | NOT NULL               |
-| `end_date`       | DATE    | NOT NULL               |
+| Column           | Type    | Constraints                      |
+| ---------------- | ------- | -------------------------------- |
+| `id`             | UUID    | Primary Key                      |
+| `user_id`        | UUID    | Foreign Key → User, NOT NULL     |
+| `category_id`    | UUID    | Foreign Key → Category, NOT NULL |
+| `spending_limit` | DECIMAL | NOT NULL                         |
+| `start_date`     | DATE    | NOT NULL                         |
+| `end_date`       | DATE    | NOT NULL                         |
 
-The following values are calculated from transactions and are not stored directly:
+The following values are calculated from transactions:
 
 * Amount spent
 * Remaining amount
@@ -227,14 +233,14 @@ The following values are calculated from transactions and are not stored directl
 
 Stores financial goals created by users.
 
-| Column           | Type    | Constraints        |
-| ---------------- | ------- | ------------------ |
-| `id`             | UUID    | Primary Key        |
-| `user_id`        | UUID    | Foreign Key → User |
-| `name`           | VARCHAR | NOT NULL           |
-| `target_amount`  | DECIMAL | NOT NULL           |
-| `current_amount` | DECIMAL | NOT NULL           |
-| `deadline`       | DATE    | NOT NULL           |
+| Column           | Type    | Constraints                  |
+| ---------------- | ------- | ---------------------------- |
+| `id`             | UUID    | Primary Key                  |
+| `user_id`        | UUID    | Foreign Key → User, NOT NULL |
+| `name`           | VARCHAR | NOT NULL                     |
+| `target_amount`  | DECIMAL | NOT NULL                     |
+| `current_amount` | DECIMAL | NOT NULL                     |
+| `deadline`       | DATE    | NOT NULL                     |
 
 The following values are calculated rather than stored:
 
@@ -249,37 +255,22 @@ The following values are calculated rather than stored:
 
 Stores hypothetical financial scenarios created by users.
 
-| Column                     | Type    | Constraints        |
-| -------------------------- | ------- | ------------------ |
-| `id`                       | UUID    | Primary Key        |
-| `user_id`                  | UUID    | Foreign Key → User |
-| `name`                     | VARCHAR | NOT NULL           |
-| `monthly_income`           | DECIMAL | NOT NULL           |
-| `housing_expenses`         | DECIMAL | NOT NULL           |
-| `food_expenses`            | DECIMAL | NOT NULL           |
-| `entertainment_expenses`   | DECIMAL | NOT NULL           |
-| `other_recurring_expenses` | DECIMAL | NOT NULL           |
+| Column                     | Type    | Constraints                  |
+| -------------------------- | ------- | ---------------------------- |
+| `id`                       | UUID    | Primary Key                  |
+| `user_id`                  | UUID    | Foreign Key → User, NOT NULL |
+| `name`                     | VARCHAR | NOT NULL                     |
+| `monthly_income`           | DECIMAL | NOT NULL                     |
+| `housing_expenses`         | DECIMAL | NOT NULL                     |
+| `food_expenses`            | DECIMAL | NOT NULL                     |
+| `entertainment_expenses`   | DECIMAL | NOT NULL                     |
+| `other_recurring_expenses` | DECIMAL | NOT NULL                     |
 
-A financial scenario represents hypothetical values and must not modify actual financial data.
+Scenario values represent hypothetical financial parameters.
 
----
+Changing a scenario must not modify actual accounts, transactions, budgets, or savings goals.
 
-### 3.8 Financial Projection
-
-Stores the result of a financial scenario simulation.
-
-| Column               | Type    | Constraints                              |
-| -------------------- | ------- | ---------------------------------------- |
-| `id`                 | UUID    | Primary Key                              |
-| `scenario_id`        | UUID    | Foreign Key → Financial Scenario, UNIQUE |
-| `projected_income`   | DECIMAL | NOT NULL                                 |
-| `projected_expenses` | DECIMAL | NOT NULL                                 |
-| `projected_savings`  | DECIMAL | NOT NULL                                 |
-| `projected_balance`  | DECIMAL | NOT NULL                                 |
-
-A projection belongs to exactly one financial scenario.
-
-The projection values are calculated from the scenario parameters and the user's current financial situation.
+The financial projection produced by a scenario is calculated by the application and is not stored as a separate database entity.
 
 ## 4. Relationships
 
@@ -353,47 +344,59 @@ A user can create multiple financial scenarios.
 User 1 ──────── 0..* FinancialScenario
 ```
 
-### Financial Scenario → Financial Projection
-
-Each scenario produces one projection.
-
-```text
-FinancialScenario 1 ──────── 1 FinancialProjection
-```
-
 ## 5. Data Integrity Rules
 
-The database shall enforce the following rules where possible:
+The database and application logic shall enforce the following rules:
 
-* A financial account must belong to an existing user.
-* A transaction must belong to an existing user.
-* A transaction may reference only accounts belonging to the same user.
-* A budget must belong to an existing user and category.
-* A savings goal must belong to an existing user.
-* A financial scenario must belong to an existing user.
-* A financial projection must belong to an existing financial scenario.
-* Monetary values shall use `DECIMAL` rather than floating-point types.
-* Budget `end_date` must not be earlier than `start_date`.
-* Savings goal `target_amount` must be greater than zero.
-* Transaction `amount` must be greater than zero.
-* Budget `spending_limit` must not be negative.
-* Savings goal `current_amount` must not be negative.
+### General Rules
 
-Transaction-specific rules:
+* Every user-owned entity must belong to an existing user.
+* Monetary values shall use `DECIMAL`.
+* Monetary amounts shall use non-negative values where applicable.
+* Foreign keys shall reference existing records.
+* Users shall only be able to access their own financial data.
 
+### Account Rules
+
+* `initial_balance` is required when creating an account.
+* `balance` must remain consistent with the account's initial balance and transactions.
+* `currency` is required.
+* Account type must be one of the supported account types.
+
+### Transaction Rules
+
+* `amount` must be greater than zero.
+* `type` must be one of: Income, Expense, Transfer.
 * Income requires a destination account.
 * Expense requires a source account and category.
 * Transfer requires both a source and destination account.
-* A transfer cannot use the same account as both source and destination.
-* A transfer should not have a category.
+* Transfer cannot use the same account as both source and destination.
+* Transfer should not have a category.
+* Referenced accounts must belong to the same user as the transaction.
+* Account balances must be updated atomically with transaction changes.
+
+### Budget Rules
+
+* `spending_limit` must not be negative.
+* `end_date` must not be earlier than `start_date`.
+* The category must belong to the same user as the budget, or be a default category.
+
+### Savings Goal Rules
+
+* `target_amount` must be greater than zero.
+* `current_amount` must not be negative.
+* `deadline` must represent a valid future target date when creating a new goal.
+
+### Category Rules
+
+* Category names must not be duplicated within the same user's custom categories.
+* Default categories cannot be modified or deleted by users.
 
 ## 6. Calculated Data
 
-The following information should be calculated rather than stored as independent database fields.
+The following information is calculated by the application rather than stored as independent database fields.
 
 ### Account Balance
-
-The account balance is affected by its transactions.
 
 ```text
 Balance =
@@ -403,6 +406,8 @@ Initial Balance
 + Incoming Transfers
 - Outgoing Transfers
 ```
+
+The stored `balance` value must remain consistent with this calculation.
 
 ### Savings
 
@@ -433,13 +438,15 @@ Projected Savings =
 Projected Income - Projected Expenses
 ```
 
-Calculated values should not be duplicated in the database unless there is a later performance-related reason to do so.
+Financial projections are generated from the current financial situation and a hypothetical financial scenario.
 
-## 7. Database Design Decisions
+They are not stored as a separate database entity.
+
+## 7. Design Decisions
 
 ### UUID Primary Keys
 
-Entities use UUID identifiers to provide unique identifiers without relying on sequential numeric IDs.
+Entities use UUID identifiers as primary keys.
 
 ### Decimal Monetary Values
 
@@ -447,16 +454,20 @@ All monetary amounts use `DECIMAL` to avoid floating-point precision errors.
 
 ### Foreign Keys
 
-Foreign keys are used to maintain referential integrity between related entities.
+Foreign keys maintain referential integrity between related entities.
 
 ### Derived Values
 
-Values that can be reliably calculated from existing data are not stored as independent fields.
-
-This reduces data duplication and prevents inconsistencies between stored and calculated values.
+Values that can be calculated from existing data are not stored as independent database fields unless a future performance requirement justifies storing them.
 
 ### User Data Isolation
 
-Every user-owned financial entity is associated with a `User`.
+User-owned financial entities contain a reference to `User`.
 
-Queries involving financial data must ensure that users can access only their own records.
+Application queries and authorization rules must ensure that users can access only their own financial records.
+
+### Financial Projections
+
+Financial projections are calculated when a scenario is simulated instead of being stored permanently.
+
+This prevents outdated projections from being stored when the user's actual financial data changes.
