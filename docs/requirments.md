@@ -16,6 +16,8 @@ This file is the documentation index. Detailed topics are split into separate do
 * [Glossary](glossary.md) - Definitions of the main domain terms.
 * [Domain Model](domain-model.md) - Core entities, attributes, and relationships.
 * [Database Design](database.md) - Relational schema, integrity rules, and calculated values.
+* [Architecture](architecture.md) - System architecture, components, and deployment.
+
 
 ## Suggested Reading Order
 
@@ -24,4 +26,5 @@ This file is the documentation index. Detailed topics are split into separate do
 3. [Use Cases](use-cases.md)
 4. [Domain Model](domain-model.md)
 5. [Database Design](database.md)
-6. [Glossary](glossary.md)
+6. [Architecture](architecture.md)
+7. [Glossary](glossary.md)
