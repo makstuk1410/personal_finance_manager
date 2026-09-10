@@ -11,5 +11,25 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  backend:
+    build:
+      context: ./backend
+    container_name: personal-finance-backend
+    environment:
+      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=personal_finance;Username=postgres;Password=postgres"
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: personal-finance-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
 volumes:
   postgres_data:
