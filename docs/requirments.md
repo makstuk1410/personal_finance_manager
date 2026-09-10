@@ -18,7 +18,6 @@ This file is the documentation index. Detailed topics are split into separate do
 * [Database Design](database.md) - Relational schema, integrity rules, and calculated values.
 * [Architecture](architecture.md) - System architecture, components, and deployment.
 
-
 ## Suggested Reading Order
 
 1. [Functional Requirements](functional-requirements.md)

@@ -17,9 +17,9 @@ flowchart LR
     User --> Logout
 ```
 
-* **UC-01** - Register account
-* **UC-02** - Log in
-* **UC-03** - Log out
+* <a id="uc-01"></a>**[UC-01](functional-requirements.md#L9)** - [Register account](functional-requirements.md#L9)
+* <a id="uc-02"></a>**[UC-02](functional-requirements.md#L25)** - [Log in](functional-requirements.md#L25)
+* <a id="uc-03"></a>**[UC-03](functional-requirements.md#L31)** - [Log out](functional-requirements.md#L31)
 
 ---
 
@@ -42,10 +42,10 @@ flowchart LR
     User --> Delete
 ```
 
-* **UC-04** - Create account
-* **UC-05** - View accounts
-* **UC-06** - Edit account
-* **UC-07** - Delete account
+* <a id="uc-04"></a>**[UC-04](functional-requirements.md#L39)** - [Create account](functional-requirements.md#L39)
+* <a id="uc-05"></a>**[UC-05](functional-requirements.md#L52)** - [View accounts](functional-requirements.md#L52)
+* <a id="uc-06"></a>**[UC-06](functional-requirements.md#L48)** - [Edit account](functional-requirements.md#L48)
+* <a id="uc-07"></a>**[UC-07](functional-requirements.md#L50)** - [Delete account](functional-requirements.md#L50)
 
 ---
 
@@ -72,12 +72,12 @@ flowchart LR
     User --> Sort
 ```
 
-* **UC-08** - Add transaction
-* **UC-09** - View transactions
-* **UC-10** - Edit transaction
-* **UC-11** - Delete transaction
-* **UC-12** - Filter transactions
-* **UC-13** - Sort transactions
+* <a id="uc-08"></a>**[UC-08](functional-requirements.md#L71)** - [Add transaction](functional-requirements.md#L71)
+* <a id="uc-09"></a>**[UC-09](functional-requirements.md#L84)** - [View transactions](functional-requirements.md#L84)
+* <a id="uc-10"></a>**[UC-10](functional-requirements.md#L86)** - [Edit transaction](functional-requirements.md#L86)
+* <a id="uc-11"></a>**[UC-11](functional-requirements.md#L88)** - [Delete transaction](functional-requirements.md#L88)
+* <a id="uc-12"></a>**[UC-12](functional-requirements.md#L92)** - [Filter transactions](functional-requirements.md#L92)
+* <a id="uc-13"></a>**[UC-13](functional-requirements.md#L99)** - [Sort transactions](functional-requirements.md#L99)
 
 ---
 
@@ -102,11 +102,11 @@ flowchart LR
     User --> Assign
 ```
 
-* **UC-14** - Create category
-* **UC-15** - View categories
-* **UC-16** - Edit category
-* **UC-17** - Delete category
-* **UC-18** - Assign category to transaction
+* <a id="uc-14"></a>**[UC-14](functional-requirements.md#L121)** - [Create category](functional-requirements.md#L121)
+* <a id="uc-15"></a>**[UC-15](functional-requirements.md#L119)** - [View categories](functional-requirements.md#L119)
+* <a id="uc-16"></a>**[UC-16](functional-requirements.md#L123)** - [Edit category](functional-requirements.md#L123)
+* <a id="uc-17"></a>**[UC-17](functional-requirements.md#L125)** - [Delete category](functional-requirements.md#L125)
+* <a id="uc-18"></a>**[UC-18](functional-requirements.md#L127)** - [Assign category to transaction](functional-requirements.md#L127)
 
 ---
 
@@ -125,8 +125,8 @@ flowchart LR
     User --> SelectPeriod
 ```
 
-* **UC-19** - View dashboard
-* **UC-20** - Select analysis period
+* <a id="uc-19"></a>**[UC-19](functional-requirements.md#L133)** - [View dashboard](functional-requirements.md#L133)
+* <a id="uc-20"></a>**[UC-20](functional-requirements.md#L145)** - [Select analysis period](functional-requirements.md#L145)
 
 ---
 
@@ -151,11 +151,11 @@ flowchart LR
     User --> Compare
 ```
 
-* **UC-21** - View income statistics
-* **UC-22** - View expense statistics
-* **UC-23** - View savings statistics
-* **UC-24** - View spending by category
-* **UC-25** - Compare financial periods
+* <a id="uc-21"></a>**[UC-21](functional-requirements.md#L159)** - [View income statistics](functional-requirements.md#L159)
+* <a id="uc-22"></a>**[UC-22](functional-requirements.md#L161)** - [View expense statistics](functional-requirements.md#L161)
+* <a id="uc-23"></a>**[UC-23](functional-requirements.md#L163)** - [View savings statistics](functional-requirements.md#L163)
+* <a id="uc-24"></a>**[UC-24](functional-requirements.md#L169)** - [View spending by category](functional-requirements.md#L169)
+* <a id="uc-25"></a>**[UC-25](functional-requirements.md#L171)** - [Compare financial periods](functional-requirements.md#L171)
 
 ---
 
@@ -180,11 +180,11 @@ flowchart LR
     User --> Track
 ```
 
-* **UC-26** - Create budget
-* **UC-27** - View budgets
-* **UC-28** - Edit budget
-* **UC-29** - Delete budget
-* **UC-30** - Track budget usage
+* <a id="uc-26"></a>**[UC-26](functional-requirements.md#L179)** - [Create budget](functional-requirements.md#L179)
+* <a id="uc-27"></a>**[UC-27](functional-requirements.md#L188)** - [View budgets](functional-requirements.md#L188)
+* <a id="uc-28"></a>**[UC-28](functional-requirements.md#L196)** - [Edit budget](functional-requirements.md#L196)
+* <a id="uc-29"></a>**[UC-29](functional-requirements.md#L198)** - [Delete budget](functional-requirements.md#L198)
+* <a id="uc-30"></a>**[UC-30](functional-requirements.md#L188)** - [Track budget usage](functional-requirements.md#L188)
 
 ---
 
@@ -211,12 +211,12 @@ flowchart LR
     User --> Estimate
 ```
 
-* **UC-31** - Create savings goal
-* **UC-32** - View savings goals
-* **UC-33** - Edit savings goal
-* **UC-34** - Delete savings goal
-* **UC-35** - Track goal progress
-* **UC-36** - Estimate goal achievability
+* <a id="uc-31"></a>**[UC-31](functional-requirements.md#L204)** - [Create savings goal](functional-requirements.md#L204)
+* <a id="uc-32"></a>**[UC-32](functional-requirements.md#L213)** - [View savings goals](functional-requirements.md#L213)
+* <a id="uc-33"></a>**[UC-33](functional-requirements.md#L221)** - [Edit savings goal](functional-requirements.md#L221)
+* <a id="uc-34"></a>**[UC-34](functional-requirements.md#L223)** - [Delete savings goal](functional-requirements.md#L223)
+* <a id="uc-35"></a>**[UC-35](functional-requirements.md#L213)** - [Track goal progress](functional-requirements.md#L213)
+* <a id="uc-36"></a>**[UC-36](functional-requirements.md#L219)** - [Estimate goal achievability](functional-requirements.md#L219)
 
 ---
 
@@ -247,11 +247,11 @@ flowchart LR
     User --> Reset
 ```
 
-* **UC-37** - Create financial scenario
-* **UC-38** - Modify scenario parameters
-* **UC-39** - Run financial simulation
-* **UC-40** - View financial projection
-* **UC-41** - Compare scenario with current situation
-* **UC-42** - Analyze impact on savings goals
-* **UC-43** - Analyze impact on budgets
-* **UC-44** - Reset scenario
+* <a id="uc-37"></a>**[UC-37](functional-requirements.md#L231)** - [Create financial scenario](functional-requirements.md#L231)
+* <a id="uc-38"></a>**[UC-38](functional-requirements.md#L233)** - [Modify scenario parameters](functional-requirements.md#L233)
+* <a id="uc-39"></a>**[UC-39](functional-requirements.md#L241)** - [Run financial simulation](functional-requirements.md#L241)
+* <a id="uc-40"></a>**[UC-40](functional-requirements.md#L243)** - [View financial projection](functional-requirements.md#L243)
+* <a id="uc-41"></a>**[UC-41](functional-requirements.md#L249)** - [Compare scenario with current situation](functional-requirements.md#L249)
+* <a id="uc-42"></a>**[UC-42](functional-requirements.md#L245)** - [Analyze impact on savings goals](functional-requirements.md#L245)
+* <a id="uc-43"></a>**[UC-43](functional-requirements.md#L247)** - [Analyze impact on budgets](functional-requirements.md#L247)
+* <a id="uc-44"></a>**[UC-44](functional-requirements.md#L253)** - [Reset scenario](functional-requirements.md#L253)
