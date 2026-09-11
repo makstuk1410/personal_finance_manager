@@ -1,5 +1,7 @@
+using System.Security.Claims;
 using backend.DTOs.Auth;
 using backend.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace backend.Controllers;
@@ -57,5 +59,18 @@ public class AuthController : ControllerBase
         }
 
         return Ok(result);
+    }
+
+
+    [Authorize]
+    [HttpGet("me")]
+    public IActionResult Me()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        return Ok(new
+        {
+            UserId = userId
+        });
     }
 }
