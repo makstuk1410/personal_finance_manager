@@ -42,4 +42,20 @@ public class AuthController : ControllerBase
             return Conflict(ex.Message);
         }
     }
+
+    [HttpPost("login")]
+    public async Task<IActionResult> Login(LoginRequest request)
+    {
+        var result = await _authService.LoginAsync(
+            request.Email,
+            request.Password
+        );
+
+        if (result == null)
+        {
+            return Unauthorized("Invalid email or password.");
+        }
+
+        return Ok(result);
+    }
 }
