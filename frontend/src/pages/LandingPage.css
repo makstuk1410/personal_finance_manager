@@ -206,3 +206,22 @@
     border-radius: 16px;
     box-shadow: 0 20px 40px rgba(15, 23, 42, 0.12);
 }
+
+@media (max-width: 768px) {
+    .hero-content,
+    .feature-content {
+        grid-template-columns: 1fr;
+    }
+
+    .hero-text {
+        max-width: none;
+    }
+
+    .hero-text h1 {
+        font-size: 40px;
+    }
+
+    .header-actions {
+        gap: 12px;
+    }
+}
