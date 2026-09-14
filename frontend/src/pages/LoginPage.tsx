@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { login, getCurrentUser } from "../services/authService";
+import { Link } from "react-router-dom";
 
 export default function LoginPage() {
     const [email, setEmail] = useState("");
@@ -40,7 +41,12 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
             />
-
+            <p>
+                Don't have an account?{" "}
+                <Link to="/register">
+                    Register now
+                </Link>
+            </p>
             <button onClick={handleLogin}>
                 Login
             </button>

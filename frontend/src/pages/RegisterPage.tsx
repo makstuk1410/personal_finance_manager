@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { register } from "../services/authService";
+import { Link } from "react-router-dom";
 
 export default function RegisterPage() {
     const [email, setEmail] = useState("");
@@ -49,6 +50,13 @@ export default function RegisterPage() {
                 value={passwordConfirmation}
                 onChange={(e) => setPasswordConfirmation(e.target.value)}
             />
+
+            <p>
+                Already have an account?{" "}
+                <Link to="/login">
+                    Login now
+                </Link>
+            </p>
 
             <button type="submit">
                 Register
