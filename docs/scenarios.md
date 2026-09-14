@@ -22,7 +22,7 @@
 * If the passwords do not match, the system informs the user and asks them to correct the data.
 * If the provided data is invalid, the system displays validation errors.
 
-![Landing page](../images/landing.png)
+![Login, landing, register page](../images/login.png)
 
 ---
 
