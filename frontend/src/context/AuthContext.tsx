@@ -20,6 +20,7 @@ type AuthContextType = {
     isAuthenticated: boolean;
     isLoading: boolean;
     login: (email: string, password: string) => Promise<void>;
+    logout: () => void;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -64,6 +65,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(currentUser);
     }
 
+    function logout() {
+        localStorage.removeItem("token");
+        setUser(null);
+    }
+
     return (
         <AuthContext.Provider
             value={{
@@ -71,6 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 isAuthenticated: user !== null,
                 isLoading,
                 login,
+                logout,
             }}
         >
             {children}

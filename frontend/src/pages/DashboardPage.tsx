@@ -1,3 +1,5 @@
+import { useNavigate } from "react-router-dom";
+
 import { useAuth } from "../context/AuthContext";
 
 export default function DashboardPage() {
@@ -5,7 +7,15 @@ export default function DashboardPage() {
         user,
         isAuthenticated,
         isLoading,
+        logout,
     } = useAuth();
+
+    const navigate = useNavigate();
+
+    function handleLogout() {
+        logout();
+        navigate("/", { replace: true });
+    }
 
     if (isLoading) {
         return <p>Loading...</p>;
@@ -25,6 +35,10 @@ export default function DashboardPage() {
                     User ID: {user.userId}
                 </p>
             )}
+
+            <button onClick={handleLogout}>
+                Logout
+            </button>
         </div>
     );
 }
