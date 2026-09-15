@@ -34,17 +34,19 @@
     color: #0f172a;
 }
 
+
 .sidebar-logo-icon {
-    width: 22px;
-    height: 22px;
+    width: 30px;
+    height: 30px;
     display: flex;
     align-items: center;
     justify-content: center;
     border: 2px solid #0f172a;
-    border-radius: 4px;
-    font-size: 12px;
+    border-radius: 5px;
+    font-size: 14px;
     font-weight: 700;
 }
+
 
 .sidebar-navigation {
     display: flex;
@@ -54,16 +56,18 @@
 }
 
 .sidebar-link {
-    height: 38px;
+    height: 40px;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     padding: 0 12px;
     border-radius: 8px;
     color: #64748b;
     text-decoration: none;
     font-size: 14px;
-    transition: background-color 0.15s ease, color 0.15s ease;
+    transition:
+        background-color 0.15s ease,
+        color 0.15s ease;
 }
 
 .sidebar-link:hover {
@@ -77,10 +81,8 @@
 }
 
 .sidebar-link-icon {
-    width: 16px;
-    text-align: center;
+    flex-shrink: 0;
 }
-
 /* Header */
 
 .header {
@@ -108,13 +110,32 @@
     gap: 16px;
 }
 
-.header-icon-button,
+.header-icon-button {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: #0f172a;
+    cursor: pointer;
+}
+
+.profile-menu {
+    position: relative;
+}
+
 .header-profile-button {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0;
     border: none;
     background: transparent;
     cursor: pointer;
     color: #0f172a;
-    font-size: 20px;
 }
 
 .header-avatar {
@@ -122,6 +143,39 @@
     height: 32px;
     border-radius: 50%;
     background: #e2e8f0;
+}
+
+.profile-dropdown {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    min-width: 140px;
+    padding: 6px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #ffffff;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+    z-index: 10;
+}
+
+.profile-dropdown-item {
+    width: 100%;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 10px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: #0f172a;
+    font-size: 14px;
+    cursor: pointer;
+    text-align: left;
+}
+
+.profile-dropdown-item:hover {
+    background: #f8fafc;
 }
 
 /* Main */

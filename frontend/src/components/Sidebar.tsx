@@ -1,29 +1,49 @@
 import { NavLink } from "react-router-dom";
+import {
+    LayoutDashboard,
+    WalletCards,
+    ArrowLeftRight,
+    ChartNoAxesCombined,
+    PieChart,
+    PiggyBank,
+    FlaskConical,
+} from "lucide-react";
 
 const navigationItems = [
     {
         label: "Dashboard",
         path: "/dashboard",
+        icon: LayoutDashboard,
     },
     {
         label: "Accounts",
         path: "/accounts",
+        icon: WalletCards,
     },
     {
         label: "Transactions",
         path: "/transactions",
+        icon: ArrowLeftRight,
     },
     {
         label: "Budgets",
         path: "/budgets",
+        icon: ChartNoAxesCombined,
+    },
+    {
+        label: "Statistics",
+        path: "/statistics",
+        icon: PieChart,
     },
     {
         label: "Saving Goals",
         path: "/savings-goals",
+        icon: PiggyBank,
     },
     {
         label: "What-If Simulator",
         path: "/simulations",
+        icon: FlaskConical,
     },
 ];
 
@@ -39,21 +59,28 @@ export default function Sidebar() {
             </div>
 
             <nav className="sidebar-navigation">
-                {navigationItems.map((item) => (
-                    <NavLink
-                        key={item.path}
-                        to={item.path}
-                        className={({ isActive }) =>
-                            `sidebar-link ${isActive ? "active" : ""}`
-                        }
-                    >
-                        <span className="sidebar-link-icon">
-                            □
-                        </span>
+                {navigationItems.map((item) => {
+                    const Icon = item.icon;
 
-                        <span>{item.label}</span>
-                    </NavLink>
-                ))}
+                    return (
+                        <NavLink
+                            key={item.path}
+                            to={item.path}
+                            end={item.path === "/dashboard"}
+                            className={({ isActive }) =>
+                                `sidebar-link ${isActive ? "active" : ""}`
+                            }
+                        >
+                            <Icon
+                                className="sidebar-link-icon"
+                                size={16}
+                                strokeWidth={1.8}
+                            />
+
+                            <span>{item.label}</span>
+                        </NavLink>
+                    );
+                })}
             </nav>
         </aside>
     );

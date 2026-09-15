@@ -1,4 +1,12 @@
-import { useLocation } from "react-router-dom";
+import { useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import {
+    Bell,
+    ChevronDown,
+    LogOut,
+} from "lucide-react";
+
+import { useAuth } from "../context/AuthContext";
 
 const pageTitles: Record<string, string> = {
     "/dashboard": "Dashboard",
@@ -12,8 +20,19 @@ const pageTitles: Record<string, string> = {
 
 export default function Header() {
     const location = useLocation();
+    const navigate = useNavigate();
 
-    const pageTitle = pageTitles[location.pathname] ?? "Personal Finance";
+    const { logout } = useAuth();
+
+    const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+
+    const pageTitle =
+        pageTitles[location.pathname] ?? "Personal Finance";
+
+    function handleLogout() {
+        logout();
+        navigate("/", { replace: true });
+    }
 
     return (
         <header className="header">
@@ -22,16 +41,50 @@ export default function Header() {
             </h1>
 
             <div className="header-actions">
-                <button className="header-icon-button">
-                    ♧
+                <button
+                    type="button"
+                    className="header-icon-button"
+                    aria-label="Notifications"
+                >
+                    <Bell size={20} strokeWidth={1.8} />
                 </button>
 
-                <div className="header-avatar">
+                <div className="profile-menu">
+                    <button
+                        type="button"
+                        className="header-profile-button"
+                        onClick={() =>
+                            setIsProfileMenuOpen((value) => !value)
+                        }
+                        aria-label="Open profile menu"
+                        aria-expanded={isProfileMenuOpen}
+                    >
+                        <div className="header-avatar">
+                        </div>
+
+                        <ChevronDown
+                            size={18}
+                            strokeWidth={1.8}
+                        />
+                    </button>
+
+                    {isProfileMenuOpen && (
+                        <div className="profile-dropdown">
+                            <button
+                                type="button"
+                                className="profile-dropdown-item"
+                                onClick={handleLogout}
+                            >
+                                <LogOut
+                                    size={16}
+                                    strokeWidth={1.8}
+                                />
+
+                                <span>Logout</span>
+                            </button>
+                        </div>
+                    )}
                 </div>
-
-                <button className="header-profile-button">
-                    ˅
-                </button>
             </div>
         </header>
     );
