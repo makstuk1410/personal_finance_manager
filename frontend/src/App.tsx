@@ -9,6 +9,12 @@ import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AuthenticatedLayout from "./layouts/AuthenticatedLayout";
 
+import AccountsPage from "./pages/AccountsPage";
+import TransactionsPage from "./pages/TransactionsPage";
+import BudgetsPage from "./pages/BudgetsPage";
+import SavingsGoalsPage from "./pages/SavingsGoalsPage";
+import SimulationsPage from "./pages/SimulationsPage";
+
 function App() {
     return (
         <BrowserRouter>
@@ -23,6 +29,31 @@ function App() {
                             <Route
                                 path="/dashboard"
                                 element={<DashboardPage />}
+                            />
+
+                            <Route
+                                path="/accounts"
+                                element={<AccountsPage />}
+                            />
+
+                            <Route
+                                path="/transactions"
+                                element={<TransactionsPage />}
+                            />
+
+                            <Route
+                                path="/budgets"
+                                element={<BudgetsPage />}
+                            />
+
+                            <Route
+                                path="/savings-goals"
+                                element={<SavingsGoalsPage />}
+                            />
+
+                            <Route
+                                path="/simulations"
+                                element={<SimulationsPage />}
                             />
                         </Route>
                     </Route>

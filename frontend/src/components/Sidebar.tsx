@@ -4,7 +4,6 @@ import {
     WalletCards,
     ArrowLeftRight,
     ChartNoAxesCombined,
-    PieChart,
     PiggyBank,
     FlaskConical,
 } from "lucide-react";
@@ -29,11 +28,6 @@ const navigationItems = [
         label: "Budgets",
         path: "/budgets",
         icon: ChartNoAxesCombined,
-    },
-    {
-        label: "Statistics",
-        path: "/statistics",
-        icon: PieChart,
     },
     {
         label: "Saving Goals",
