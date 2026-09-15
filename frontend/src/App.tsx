@@ -7,6 +7,7 @@ import DashboardPage from "./pages/DashboardPage";
 
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
+import AuthenticatedLayout from "./layouts/AuthenticatedLayout";
 
 function App() {
     return (
@@ -14,16 +15,16 @@ function App() {
             <AuthProvider>
                 <Routes>
                     <Route path="/" element={<LandingPage />} />
-
                     <Route path="/login" element={<LoginPage />} />
-
                     <Route path="/register" element={<RegisterPage />} />
 
                     <Route element={<ProtectedRoute />}>
-                        <Route
-                            path="/dashboard"
-                            element={<DashboardPage />}
-                        />
+                        <Route element={<AuthenticatedLayout />}>
+                            <Route
+                                path="/dashboard"
+                                element={<DashboardPage />}
+                            />
+                        </Route>
                     </Route>
                 </Routes>
             </AuthProvider>
