@@ -50,11 +50,19 @@ flowchart LR
 
 ### UC-04 — [Create account](functional-requirements.md#fr-031)
 
+The user creates a new financial account that will be used to record and manage their financial transactions. The user provides the account naрme, account type, initial balance, and currency. The system validates the provided data and creates the account associated with the authenticated user.
+
 ### UC-05 — [View accounts](functional-requirements.md#fr-035)
+
+The user views their financial accounts and their current financial information. The system retrieves the accounts belonging to the authenticated user and displays their relevant details.
 
 ### UC-06 — [Edit account](functional-requirements.md#fr-033)
 
+The user modifies the information of an existing financial account. The system validates the updated data and saves the changes while preserving the account's ownership and financial integrity.
+
 ### UC-07 — [Delete account](functional-requirements.md#fr-034)
+
+The user deletes an existing financial account from their account list. The system verifies that the account belongs to the authenticated user and performs the deletion according to the application's financial data integrity rules.
 
 ---
 
