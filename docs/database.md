@@ -1,156 +1,138 @@
 # Database Design
 
-This document describes the relational database structure of the Personal Finance Manager application.
+This document distinguishes the migrated PostgreSQL schema from planned financial
+modules. The source of truth is [AppDbContext](../backend/Data/AppDbContext.cs) and
+[EF Core migrations](../backend/Migrations). See [Backend Status](backend-status.md).
 
-The database design is derived from the Domain Model and Functional Requirements.
+## 1. Implemented schema
 
-## 1. Database Overview
+The application currently has three tables: `Users`, `FinancialAccounts`, and
+`Categories`. EF also maintains `__EFMigrationsHistory`. Table/column names use
+PascalCase and require quoting in PostgreSQL SQL. All primary keys are integer
+identity columns, not UUIDs. User/account timestamps are UTC values stored as
+`timestamp with time zone`.
 
-The MVP database contains the following main entities:
+### Users
 
-* User
-* Financial Account
-* Transaction
-* Category
-* Budget
-* Savings Goal
-* Financial Scenario
+| Column | PostgreSQL type | Constraints |
+| --- | --- | --- |
+| `Id` | integer | Primary key, identity by default |
+| `Email` | text | NOT NULL; no unique index |
+| `PasswordHash` | text | NOT NULL |
+| `CreatedAt` | timestamp with time zone | NOT NULL |
 
-The database uses a relational structure with foreign keys to maintain relationships between entities.
+Passwords are hashed by `PasswordHasher<User>`. Duplicate email checking is an
+application query using exact equality; there is no database uniqueness guarantee,
+case normalization, or trimming. The table has no length/email-format constraints.
 
-## 2. Entity Relationship Diagram
+### FinancialAccounts
 
-```mermaid
-erDiagram
+| Column | PostgreSQL type | Constraints |
+| --- | --- | --- |
+| `Id` | integer | Primary key, identity by default |
+| `UserId` | integer | NOT NULL, FK to Users.Id, ON DELETE CASCADE |
+| `Name` | text | NOT NULL |
+| `Type` | text | NOT NULL; enum stored as string |
+| `InitialBalance` | numeric(18,2) | NOT NULL |
+| `Balance` | numeric(18,2) | NOT NULL |
+| `Currency` | text | NOT NULL |
+| `CreatedAt` | timestamp with time zone | NOT NULL |
 
-    USER ||--o{ FINANCIAL_ACCOUNT : owns
-    USER ||--o{ TRANSACTION : creates
-    USER ||--o{ CATEGORY : creates
-    USER ||--o{ BUDGET : creates
-    USER ||--o{ SAVINGS_GOAL : creates
-    USER ||--o{ FINANCIAL_SCENARIO : creates
+`IX_FinancialAccounts_UserId` is a non-unique index. Supported named enum values
+are `Cash`, `BankAccount`, `CreditCard`, and `SavingsAccount`; there is no database
+check constraint restricting the text column. API validation limits account names
+to 100 characters and currencies to PLN, EUR, USD, GBP, CHF, UAH (case-insensitive).
+These are request rules, not database length/check constraints.
 
-    FINANCIAL_ACCOUNT ||--o{ TRANSACTION : affects
-    CATEGORY ||--o{ TRANSACTION : classifies
-    CATEGORY ||--o{ BUDGET : applies_to
+Creation sets both balances to the supplied initial balance (zero if omitted).
+Negative values are allowed. Updates change only name, type, and currency, without
+currency conversion. There are no transaction tables or balance recalculation
+operations yet. Account deletion hard-deletes the row after checking ownership.
 
-    USER {
-        uuid id PK
-        string email UK
-        string password_hash
-    }
+### Categories
 
-    FINANCIAL_ACCOUNT {
-        uuid id PK
-        uuid user_id FK
-        string name
-        string type
-        decimal initial_balance
-        decimal balance
-        string currency
-    }
+| Column | PostgreSQL type | Constraints |
+| --- | --- | --- |
+| `Id` | integer | Primary key, identity by default |
+| `UserId` | integer | Nullable FK to Users.Id, ON DELETE CASCADE |
+| `Name` | character varying(100) | NOT NULL |
+| `NormalizedName` | character varying(100) | NOT NULL |
+| `IsDefault` | boolean | NOT NULL |
 
-    TRANSACTION {
-        uuid id PK
-        uuid user_id FK
-        uuid source_account_id FK
-        uuid destination_account_id FK
-        uuid category_id FK
-        decimal amount
-        string type
-        date date
-        string description
-    }
+The API trims `Name` and stores its invariant-uppercase form in `NormalizedName`.
+This is an application-maintained column, not a generated database column.
 
-    CATEGORY {
-        uuid id PK
-        uuid user_id FK
-        string name
-        boolean is_default
-    }
+* `IX_Categories_UserId_NormalizedName` is unique, enforcing per-user custom-name
+  uniqueness, including concurrent writes.
+* `IX_Categories_NormalizedName` is unique with filter `"IsDefault"`, enforcing
+  distinct normalized names among defaults.
+* `CK_Categories_Owner` requires default rows to have a null owner and custom rows
+  to have a non-null owner.
+* Different users can reuse names. A custom category can share a default's name.
+* Default immutability and caller ownership are enforced by the API, not database
+  row-level permissions. API invalid-name validation is separate from NOT NULL.
 
-    BUDGET {
-        uuid id PK
-        uuid user_id FK
-        uuid category_id FK
-        decimal spending_limit
-        date start_date
-        date end_date
-    }
+The `AddCategories` migration inserts these shared defaults:
 
-    SAVINGS_GOAL {
-        uuid id PK
-        uuid user_id FK
-        string name
-        decimal target_amount
-        decimal current_amount
-        date deadline
-    }
+| ID | Name |
+| --- | --- |
+| -1 | Food |
+| -2 | Transport |
+| -3 | Housing |
+| -4 | Entertainment |
+| -5 | Shopping |
+| -6 | Health |
+| -7 | Education |
+| -8 | Subscriptions |
+| -9 | Other |
 
-    FINANCIAL_SCENARIO {
-        uuid id PK
-        uuid user_id FK
-        string name
-        decimal monthly_income
-        decimal housing_expenses
-        decimal food_expenses
-        decimal entertainment_expenses
-        decimal other_recurring_expenses
-    }
+Negative seed IDs leave generated positive IDs for custom categories. Defaults
+have `IsDefault = true` and `UserId = null`. Categories have no timestamp column.
+The Figma dropdown's Transfer label is not a default category: the planned
+transaction rules treat transfers as uncategorized.
+
+### Implemented relationships
+
+* One user owns zero or more accounts; each account requires one user.
+* One user owns zero or more custom categories; shared defaults have no user.
+* Deleting a user at the database level cascades to their accounts and custom
+  categories. There is no user-deletion API.
+* No foreign keys from transactions or budgets exist yet.
+
+## 2. Migrations and startup
+
+Apply migrations before starting the backend:
+
+```sh
+dotnet ef database update --project backend
 ```
 
-## 3. Tables
+Migration order: `AddUsers`, `AddFinancialAccounts`,
+`StoreAccountTypeAsString` (empty Up/Down), `AddCategories`.
+`AddFinancialAccounts` already creates Type as text. Startup does not migrate the
+database: it queries Users to seed the test account. A fresh database must be
+migrated first. Compose does not supply a migration job or readiness health check.
 
-### 3.1 User
+## 3. Planned schema and business rules
 
-Stores user authentication information.
+The following tables and calculations are design proposals. They are not present
+in the current model or migrations. Lowercase snake_case names here are conceptual,
+not existing physical columns. Proposed foreign-key types are integers to match
+the implemented tables; final migrations will define exact constraints and names.
+Transaction and budget references will need ownership checks and an explicit
+category/account deletion policy when those modules are implemented.
 
-| Column          | Type    | Constraints      |
-| --------------- | ------- | ---------------- |
-| `id`            | UUID    | Primary Key      |
-| `email`         | VARCHAR | NOT NULL, UNIQUE |
-| `password_hash` | VARCHAR | NOT NULL         |
-
----
-
-### 3.2 Financial Account
-
-Stores financial accounts belonging to users.
-
-| Column            | Type    | Constraints                  |
-| ----------------- | ------- | ---------------------------- |
-| `id`              | UUID    | Primary Key                  |
-| `user_id`         | UUID    | Foreign Key → User, NOT NULL |
-| `name`            | VARCHAR | NOT NULL                     |
-| `type`            | VARCHAR | NOT NULL                     |
-| `initial_balance` | DECIMAL | NOT NULL                     |
-| `balance`         | DECIMAL | NOT NULL                     |
-| `currency`        | VARCHAR | NOT NULL                     |
-
-Supported account types:
-
-* Cash
-* Bank account
-* Credit card
-* Savings account
-
-`initial_balance` represents the balance of the account when it was created.
-
-`balance` represents its current balance and is updated when transactions are created, modified, or deleted.
-
----
-
-### 3.3 Transaction
+### Transaction (planned)
 
 Stores income, expense, and transfer operations.
 
 | Column                   | Type    | Constraints                           |
 | ------------------------ | ------- | ------------------------------------- |
-| `id`                     | UUID    | Primary Key                           |
-| `user_id`                | UUID    | Foreign Key → User, NOT NULL          |
-| `source_account_id`      | UUID    | Foreign Key → Financial Account, NULL |
-| `destination_account_id` | UUID    | Foreign Key → Financial Account, NULL |
-| `category_id`            | UUID    | Foreign Key → Category, NULL          |
+| `id`                     | INTEGER    | Primary Key                           |
+| `user_id`                | INTEGER    | Foreign Key → User, NOT NULL          |
+| `source_account_id`      | INTEGER    | Foreign Key → Financial Account, NULL |
+| `destination_account_id` | INTEGER    | Foreign Key → Financial Account, NULL |
+| `category_id`            | INTEGER    | Foreign Key → Category, NULL          |
 | `amount`                 | DECIMAL | NOT NULL                              |
 | `type`                   | VARCHAR | NOT NULL                              |
 | `date`                   | DATE    | NOT NULL                              |
@@ -176,46 +158,16 @@ The `user_id` must match the owner of the accounts referenced by the transaction
 
 ---
 
-### 3.4 Category
 
-Stores predefined and custom transaction categories.
-
-| Column       | Type    | Constraints                                     |
-| ------------ | ------- | ----------------------------------------------- |
-| `id`         | UUID    | Primary Key                                     |
-| `user_id`    | UUID    | Foreign Key → User, NULL for default categories |
-| `name`       | VARCHAR | NOT NULL                                        |
-| `is_default` | BOOLEAN | NOT NULL                                        |
-
-Default categories include:
-
-* Food
-* Transport
-* Housing
-* Entertainment
-* Shopping
-* Health
-* Education
-* Subscriptions
-* Other
-
-Default categories are available to users without being owned by a specific user.
-
-Custom categories belong to the user who created them.
-
-A user should not be able to create duplicate category names within their own categories.
-
----
-
-### 3.5 Budget
+### Budget (planned)
 
 Stores spending limits defined for categories and periods.
 
 | Column           | Type    | Constraints                      |
 | ---------------- | ------- | -------------------------------- |
-| `id`             | UUID    | Primary Key                      |
-| `user_id`        | UUID    | Foreign Key → User, NOT NULL     |
-| `category_id`    | UUID    | Foreign Key → Category, NOT NULL |
+| `id`             | INTEGER    | Primary Key                      |
+| `user_id`        | INTEGER    | Foreign Key → User, NOT NULL     |
+| `category_id`    | INTEGER    | Foreign Key → Category, NOT NULL |
 | `spending_limit` | DECIMAL | NOT NULL                         |
 | `start_date`     | DATE    | NOT NULL                         |
 | `end_date`       | DATE    | NOT NULL                         |
@@ -229,14 +181,14 @@ The following values are calculated from transactions:
 
 ---
 
-### 3.6 Savings Goal
+### Savings Goal (planned)
 
 Stores financial goals created by users.
 
 | Column           | Type    | Constraints                  |
 | ---------------- | ------- | ---------------------------- |
-| `id`             | UUID    | Primary Key                  |
-| `user_id`        | UUID    | Foreign Key → User, NOT NULL |
+| `id`             | INTEGER    | Primary Key                  |
+| `user_id`        | INTEGER    | Foreign Key → User, NOT NULL |
 | `name`           | VARCHAR | NOT NULL                     |
 | `target_amount`  | DECIMAL | NOT NULL                     |
 | `current_amount` | DECIMAL | NOT NULL                     |
@@ -251,14 +203,14 @@ The following values are calculated rather than stored:
 
 ---
 
-### 3.7 Financial Scenario
+### Financial Scenario (planned)
 
 Stores hypothetical financial scenarios created by users.
 
 | Column                     | Type    | Constraints                  |
 | -------------------------- | ------- | ---------------------------- |
-| `id`                       | UUID    | Primary Key                  |
-| `user_id`                  | UUID    | Foreign Key → User, NOT NULL |
+| `id`                       | INTEGER    | Primary Key                  |
+| `user_id`                  | INTEGER    | Foreign Key → User, NOT NULL |
 | `name`                     | VARCHAR | NOT NULL                     |
 | `monthly_income`           | DECIMAL | NOT NULL                     |
 | `housing_expenses`         | DECIMAL | NOT NULL                     |
@@ -272,96 +224,6 @@ Changing a scenario must not modify actual accounts, transactions, budgets, or s
 
 The financial projection produced by a scenario is calculated by the application and is not stored as a separate database entity.
 
-## 4. Relationships
-
-### User → Financial Account
-
-One user can own zero or more financial accounts.
-
-```text
-User 1 ──────── 0..* FinancialAccount
-```
-
-### User → Transaction
-
-One user can create zero or more transactions.
-
-```text
-User 1 ──────── 0..* Transaction
-```
-
-### Financial Account → Transaction
-
-A financial account can participate in many transactions.
-
-A transaction can affect one or two accounts depending on its type.
-
-```text
-FinancialAccount 1 ──────── 0..* Transaction
-```
-
-### Category → Transaction
-
-One category can be assigned to many transactions.
-
-A transaction can have zero or one category.
-
-```text
-Category 1 ──────── 0..* Transaction
-```
-
-### Category → Budget
-
-A category can have multiple budgets for different periods.
-
-Each budget applies to one category.
-
-```text
-Category 1 ──────── 0..* Budget
-```
-
-### User → Budget
-
-A user can create multiple budgets.
-
-```text
-User 1 ──────── 0..* Budget
-```
-
-### User → Savings Goal
-
-A user can create multiple savings goals.
-
-```text
-User 1 ──────── 0..* SavingsGoal
-```
-
-### User → Financial Scenario
-
-A user can create multiple financial scenarios.
-
-```text
-User 1 ──────── 0..* FinancialScenario
-```
-
-## 5. Data Integrity Rules
-
-The database and application logic shall enforce the following rules:
-
-### General Rules
-
-* Every user-owned entity must belong to an existing user.
-* Monetary values shall use `DECIMAL`.
-* Monetary amounts shall use non-negative values where applicable.
-* Foreign keys shall reference existing records.
-* Users shall only be able to access their own financial data.
-
-### Account Rules
-
-* `initial_balance` is required when creating an account.
-* `balance` must remain consistent with the account's initial balance and transactions.
-* `currency` is required.
-* Account type must be one of the supported account types.
 
 ### Transaction Rules
 
@@ -387,12 +249,8 @@ The database and application logic shall enforce the following rules:
 * `current_amount` must not be negative.
 * `deadline` must represent a valid future target date when creating a new goal.
 
-### Category Rules
 
-* Category names must not be duplicated within the same user's custom categories.
-* Default categories cannot be modified or deleted by users.
-
-## 6. Calculated Data
+### Calculated Data (planned)
 
 The following information is calculated by the application rather than stored as independent database fields.
 
@@ -441,33 +299,3 @@ Projected Income - Projected Expenses
 Financial projections are generated from the current financial situation and a hypothetical financial scenario.
 
 They are not stored as a separate database entity.
-
-## 7. Design Decisions
-
-### UUID Primary Keys
-
-Entities use UUID identifiers as primary keys.
-
-### Decimal Monetary Values
-
-All monetary amounts use `DECIMAL` to avoid floating-point precision errors.
-
-### Foreign Keys
-
-Foreign keys maintain referential integrity between related entities.
-
-### Derived Values
-
-Values that can be calculated from existing data are not stored as independent database fields unless a future performance requirement justifies storing them.
-
-### User Data Isolation
-
-User-owned financial entities contain a reference to `User`.
-
-Application queries and authorization rules must ensure that users can access only their own financial records.
-
-### Financial Projections
-
-Financial projections are calculated when a scenario is simulated instead of being stored permanently.
-
-This prevents outdated projections from being stored when the user's actual financial data changes.

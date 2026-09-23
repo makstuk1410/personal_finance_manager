@@ -2,7 +2,10 @@
 
 This document describes the REST API of the Personal Finance Manager backend.
 
-The API provides access to authentication, financial accounts, transactions, categories, budgets, savings goals, financial statistics, and the What-If Simulator.
+The implemented API provides authentication, financial accounts, categories, and
+a database connectivity check. Transactions, budgets, savings goals, dashboard,
+statistics, and simulations below are **planned contracts**, not available endpoints.
+See [Backend Status](backend-status.md) for implementation gaps.
 
 ## 1. API Principles
 
@@ -15,11 +18,14 @@ The API follows REST principles and uses HTTP methods to represent operations on
 | `PUT`    | Replace or update an existing resource    |
 | `DELETE` | Delete a resource                         |
 
-The API uses JSON for request and response bodies.
+Request DTOs and successful data responses use camelCase JSON. Some errors are
+plain-text strings, framework Problem Details, or empty responses; there is no
+single application-wide error envelope.
 
 Protected endpoints require authentication.
 
-Users can only access resources belonging to their account.
+Account queries are scoped to the authenticated user. Category queries include
+that user's custom categories and shared defaults. Resource IDs are integers.
 
 ## 2. Base URL
 
@@ -32,13 +38,13 @@ Resource endpoints are grouped by functional area.
 ```text
 /api/auth
 /api/accounts
-/api/transactions
 /api/categories
-/api/budgets
-/api/savings-goals
-/api/statistics
-/api/simulations
+/api/health/database
 ```
+
+Docker exposes the API at `http://localhost:8080`. The `http` launch profile uses
+`http://localhost:5001`. Send `Authorization: Bearer <token>` for protected routes.
+Swagger UI is available at `/swagger` and its JSON at `/swagger/v1/swagger.json`.
 
 ## 3. Authentication API
 
@@ -66,6 +72,13 @@ Response:
 201 Created
 ```
 
+The response is `{ "id": 1, "email": "user@example.com", "createdAt": "2026-09-23T09:00:00Z" }`.
+Password mismatch returns `400`; an existing exact-match email returns `409`.
+Email comparison is case-sensitive and does not trim whitespace. The backend has
+no explicit email-format or password-strength validators and no database unique
+index on email; concurrent duplicate registrations are not prevented. Missing/null
+non-nullable string properties are handled by framework model validation.
+
 ### Log In
 
 ```http
@@ -89,21 +102,24 @@ Response:
 200 OK
 ```
 
-The response contains the authentication information required to access protected endpoints.
+The response is `{ "token": "<JWT>" }`. Invalid credentials return `401`.
+Tokens use HS256 and contain user ID and email claims, with an expiry set one hour
+after issuance. Issuer, audience, signature, and lifetime are validated. The code
+does not override the token validator's clock-skew setting. There is no refresh-token flow.
 
-### Log Out
-
-```http
-POST /api/auth/logout
-```
-
-Logs out the authenticated user.
-
-Response:
+### Current User
 
 ```http
-204 No Content
+GET /api/auth/me
 ```
+
+Requires a bearer token and returns `200` with `{ "userId": "1" }`. The value is
+the ID claim as a string, not a complete user profile or a database lookup.
+
+### Log Out (client-side)
+
+There is no backend logout endpoint. The frontend removes the token from local
+storage and clears its authentication state. This does not revoke an issued JWT.
 
 ## 4. Financial Accounts API
 
@@ -114,6 +130,11 @@ POST /api/accounts
 ```
 
 Creates a financial account.
+
+All account routes require a bearer token. Creation returns `201` and a `Location`
+header pointing to `GET /api/accounts/{id}`. `balance` starts at `initialBalance`.
+The create response currently serializes the entity, including `userId` and the
+`user` navigation property (normally null); list/detail responses use `AccountResponse`.
 
 Request:
 
@@ -126,6 +147,18 @@ Request:
 }
 ```
 
+Validation and storage behavior:
+
+* `name` is required and at most 100 characters; names are not trimmed or unique.
+* Named account types are `Cash`, `BankAccount`, `CreditCard`, `SavingsAccount`.
+  The enum converter also accepts integer values, without an enum-membership
+  validator. Omitting `type` currently defaults to `Cash`.
+* `initialBalance` accepts negatives and the range -9999999999999999.99 through
+  9999999999999999.99. Omitting it defaults to zero. PostgreSQL stores two decimal places.
+* Currency validation accepts `PLN`, `EUR`, `USD`, `GBP`, `CHF`, and `UAH`,
+  case-insensitively; the submitted casing is stored. The current error message
+  omits `UAH` even though it is accepted.
+
 ### Get Accounts
 
 ```http
@@ -133,6 +166,10 @@ GET /api/accounts
 ```
 
 Returns the authenticated user's financial accounts.
+
+Returns `200` with an array (empty when no accounts exist). There is no pagination,
+filtering, or guaranteed ordering. Each item contains `id`, `name`, `type`,
+`initialBalance`, `balance`, `currency`, and `createdAt`.
 
 ### Get Account
 
@@ -142,6 +179,9 @@ GET /api/accounts/{id}
 
 Returns a specific financial account.
 
+Returns `200` with the same fields as a list item, or `404` for a missing account
+or an account owned by another user.
+
 ### Update Account
 
 ```http
@@ -149,6 +189,11 @@ PUT /api/accounts/{id}
 ```
 
 Updates an existing financial account.
+
+Accepts `{ "name": "Savings", "type": "SavingsAccount", "currency": "EUR" }`.
+Only these three fields are changed; balances cannot be edited through this route.
+Changing currency relabels the account without converting its balance. Returns
+`204`, or `404` for a missing/other user's account.
 
 ### Delete Account
 
@@ -158,9 +203,13 @@ DELETE /api/accounts/{id}
 
 Deletes a financial account.
 
-An account cannot be deleted if doing so would violate financial data integrity.
+Returns `204`, or `404` for a missing/other user's account. The current endpoint
+hard-deletes the account. There is no transaction-reference deletion check because
+the transaction module is not implemented.
 
-## 5. Transactions API
+## 5. Transactions API (planned)
+
+No transaction endpoints, model, or migration exist yet. This section is a proposal.
 
 ### Create Transaction
 
@@ -176,8 +225,8 @@ Example expense:
 {
   "amount": 45.50,
   "type": "Expense",
-  "categoryId": "category-id",
-  "sourceAccountId": "account-id",
+  "categoryId": -1,
+  "sourceAccountId": 1,
   "date": "2026-09-07",
   "description": "Lunch"
 }
@@ -189,8 +238,8 @@ Example transfer:
 {
   "amount": 500.00,
   "type": "Transfer",
-  "sourceAccountId": "account-id-1",
-  "destinationAccountId": "account-id-2",
+  "sourceAccountId": 1,
+  "destinationAccountId": 2,
   "date": "2026-09-07",
   "description": "Transfer to savings"
 }
@@ -300,7 +349,50 @@ Deletes a custom category.
 
 Default categories cannot be modified or deleted by users.
 
-## 7. Budgets API
+#### Implemented category contract
+
+All category endpoints require a bearer token. IDs are integers, matching the
+existing backend's user and account IDs.
+Responses contain `id`, `name`, and `isDefault`:
+
+```json
+{ "id": 1, "name": "Pets", "isDefault": false }
+```
+
+* `GET /api/categories` returns an alphabetically sorted array containing the nine
+  defaults and only the caller's custom categories, for the Figma category dropdown.
+* `GET /api/categories/{id}` returns one available category.
+* `POST /api/categories` accepts `{ "name": "Pets" }`, returns `201` with the
+  created category and a `Location` header, allowing the dropdown to select it.
+* `PUT /api/categories/{id}` accepts the same body and returns `204`.
+* `DELETE /api/categories/{id}` returns `204`.
+* Names are required, at most 100 characters, and trimmed before storage.
+  Custom names are unique per user, ignoring case and surrounding whitespace;
+  duplicates return `409`, including simultaneous requests.
+  Different users may reuse a name; a custom category may also share a default's name.
+* Invalid input returns `400`, unauthenticated calls `401`, modifications of
+  defaults `403`, and missing or another user's category `404`.
+
+Defaults are seeded by the `AddCategories` migration. Apply migrations before
+starting the API with `dotnet ef database update --project backend`.
+The Figma dropdown's “Transfer” entry is not seeded: the documented transaction
+rules specify that transfers have no category. Transaction and budget assignment
+will use these IDs when those backend modules are implemented.
+
+For integration checks, start the API against a **disposable migrated PostgreSQL
+database**, then run:
+
+```sh
+node backend/tests/categories.integration.mjs http://localhost:5088
+```
+
+The test creates two users and checks defaults, validation, ownership, CRUD,
+duplicate-name conflicts, and concurrent creation. It leaves its test data in
+that disposable database.
+
+## 7. Budgets API (planned)
+
+No budget endpoints, model, or migration exist yet.
 
 ### Create Budget
 
@@ -312,7 +404,7 @@ Request:
 
 ```json
 {
-  "categoryId": "category-id",
+  "categoryId": -1,
   "spendingLimit": 800.00,
   "startDate": "2026-09-01",
   "endDate": "2026-09-30"
@@ -351,7 +443,9 @@ DELETE /api/budgets/{id}
 
 Deletes a budget.
 
-## 8. Savings Goals API
+## 8. Savings Goals API (planned)
+
+No savings-goal endpoints, model, or migration exist yet.
 
 ### Create Savings Goal
 
@@ -402,7 +496,9 @@ DELETE /api/savings-goals/{id}
 
 Deletes a savings goal.
 
-## 9. Dashboard API
+## 9. Dashboard API (planned)
+
+There is no dashboard endpoint in the current backend.
 
 The dashboard combines information from multiple resources.
 
@@ -430,7 +526,9 @@ The response may contain:
 
 The dashboard does not represent a separate database entity.
 
-## 10. Financial Statistics API
+## 10. Financial Statistics API (planned)
+
+There are no statistics endpoints in the current backend.
 
 ### Get Statistics
 
@@ -455,7 +553,9 @@ GET /api/statistics/compare?from=2026-08-01&to=2026-08-31&compareFrom=2026-09-01
 
 Compares financial statistics between two periods.
 
-## 11. What-If Simulator API
+## 11. What-If Simulator API (planned)
+
+No simulation endpoints, model, or migration exist yet.
 
 The What-If Simulator is based on hypothetical financial scenarios.
 
@@ -556,25 +656,38 @@ The API uses standard HTTP status codes.
 
 ## 13. Validation and Error Responses
 
-Invalid requests should return a consistent error format.
+DTO/model-binding failures use ASP.NET Core validation Problem Details. For example,
+a missing category name produces a `400` with an `errors.Name` entry. Framework
+responses may additionally contain `type` and `traceId`.
 
 Example:
 
 ```json
 {
   "status": 400,
-  "title": "Validation Error",
+  "title": "One or more validation errors occurred.",
   "errors": {
-    "amount": [
-      "Amount must be greater than zero."
+    "Name": [
+      "The Name field is required."
     ]
   }
 }
 ```
 
-The API must not expose sensitive information through error messages.
+Controller errors such as category conflicts or password mismatches return strings.
+Authentication challenges may have no body. A unified error format and sanitized
+database-health errors remain outstanding requirements.
 
-## 14. Pagination
+### Database Connectivity (implemented)
+
+`GET /api/health/database` is public. A successful connection returns `200` with
+`{ "connected": true, "state": "Open" }`. A failure returns `500` with
+`connected: false`, `error` (exception message), and `type` (exception type).
+It checks connectivity, not migration status or the existence of tables.
+
+## 14. Pagination (planned)
+
+Neither of the implemented list endpoints supports pagination.
 
 Large collections, especially transactions, should support pagination.
 
@@ -596,7 +709,11 @@ A paginated response may contain:
 }
 ```
 
-## 15. API and Domain Separation
+## 15. API and Domain Separation (target design)
+
+Currently, account reads and category responses use DTOs, but account creation
+returns an entity. Controllers access `AppDbContext` directly; only authentication
+uses a separate service. The following diagram is a target, not the current call path.
 
 The API should not expose database entities directly.
 
@@ -625,7 +742,7 @@ flowchart LR
 
 This keeps the API contract independent from the database implementation.
 
-## 16. API Design Principles
+## 16. API Design Principles (targets)
 
 The API should follow these principles:
 

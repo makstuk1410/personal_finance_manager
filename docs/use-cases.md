@@ -1,5 +1,11 @@
 # Use Cases
 
+This catalog includes planned product behavior. Authentication and accounts are
+implemented with the limitations in [Backend Status](backend-status.md).
+UC-14–UC-17 have backend category endpoints; category assignment and the transaction,
+budget, statistics, savings-goal, and simulation use cases await their backend
+modules. UI diagrams do not imply an available API.
+
 ## 1. Authentication
 
 ```mermaid
@@ -27,7 +33,10 @@ The user logs in by providing their email address and password. The system verif
 
 ### UC-03 — [Log out](functional-requirements.md#fr-024)
 
-The authenticated user logs out of the application. The system terminates the user's authenticated session and the user is no longer treated as authenticated.
+The authenticated user logs out of the application. The frontend removes the
+stored JWT and clears its local authentication state. There is no backend logout
+endpoint or token revocation; the issued token remains valid until its expiry
+under the token validator's lifetime rules.
 
 ## 2. Financial Accounts
 

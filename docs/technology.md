@@ -1,267 +1,117 @@
 # Technology Stack
 
-## Overview
+This describes the code and configuration in the repository, not the planned full
+product. See [Backend Status](backend-status.md) for available modules.
 
-Personal Finance Manager will be implemented as a web application using a React frontend, ASP.NET Core Web API backend, PostgreSQL database, and Docker for containerization and local development.
+## Current stack
 
-The application will follow a client-server architecture:
+| Area | Implemented technology |
+| --- | --- |
+| Backend | C#, ASP.NET Core Web API, target framework net8.0 |
+| ORM | Entity Framework Core 8.0.31 |
+| Database provider | Npgsql.EntityFrameworkCore.PostgreSQL 8.0.11 |
+| Authentication | JwtBearer 8.0.18, HS256 JWTs, PasswordHasher<User> from Identity.Core 8.0.18 |
+| API exploration | Swashbuckle.AspNetCore 6.6.2, Swagger UI and OpenAPI JSON |
+| Database | PostgreSQL; Compose image postgres:16 |
+| Frontend | React 19, TypeScript 6, Vite 8, React Router 7 |
+| Styling | Regular CSS files; Tailwind CSS is not configured |
+| Lint | Oxlint |
+| Containers | .NET 8 SDK/runtime backend; Node 22 frontend build and nginx:alpine serving |
+| Category tests | Dependency-free Node.js integration script calling a running API |
+| Design reference | Figma |
 
-```mermaid
-flowchart LR
-    A[React Frontend] -->|HTTP / JSON| B[ASP.NET Core Web API]
-    B --> C[Application Logic]
-    C --> D[Entity Framework Core]
-    D --> E[(PostgreSQL)]
+Exact backend package versions are in [backend.csproj](../backend/backend.csproj).
+Frontend version ranges are in [package.json](../frontend/package.json), with
+resolved versions in its lockfile.
 
-    B --> F[Authentication & Authorization]
+## Backend structure
 
-    G[Docker Compose] --> A
-    G --> B
-    G --> E
+The backend is one project containing Controllers, DTOs, Models, Data, Services,
+Validation, and Migrations folders. Authentication uses AuthService; account and
+category controllers use AppDbContext directly. Separate application/domain/
+infrastructure assemblies and the remaining financial modules are target designs.
+
+Current routes cover authentication, financial accounts, categories, and database
+connectivity. See [API Design](api-design.md) for payloads and status codes.
+Swagger is enabled in every environment, at /swagger and /swagger/v1/swagger.json.
+
+PostgreSQL currently stores users, financial accounts, and categories. Account
+monetary fields use numeric(18,2); IDs use integer identity columns. Category
+uniqueness is backed by indexes. Email uniqueness is not database-enforced.
+
+## Authentication and configuration
+
+JWTs contain user ID and email claims and have expiry set one hour after issuance.
+The server validates issuer, audience, signing key, and lifetime. Logout removes
+client-side state; there is no revocation or refresh-token endpoint.
+
+ConnectionStrings:DefaultConnection and Jwt:Key/Issuer/Audience are read from
+ASP.NET configuration. Environment overrides use double underscores, for example
+ConnectionStrings__DefaultConnection and Jwt__Key. The repository currently
+includes a signing key; production secret management remains outstanding.
+
+Startup seeds a test user in every environment. It does not apply migrations and
+therefore requires the Users table to exist before the API starts.
+
+## Local development
+
+With .NET 8 SDK, dotnet-ef, and a reachable PostgreSQL database, configure the
+connection and JWT values, then run from the repository root:
+
+```sh
+dotnet ef database update --project backend
+dotnet run --project backend --no-launch-profile --urls http://localhost:8080
 ```
 
-## Frontend
+The checked-in HTTP launch profile instead uses port 5001; the HTTPS profile uses
+7009 plus 5001. Frontend API URLs are currently hardcoded to localhost:8080, and
+backend CORS permits only http://localhost:3000. Run the frontend on that port
+when testing cross-origin calls:
 
-### React
-
-**React** will be used to build the user interface.
-
-Responsibilities:
-
-* rendering application screens;
-* handling user interactions;
-* managing client-side state;
-* communicating with the backend API;
-* displaying financial data, statistics and charts;
-* implementing forms for accounts, transactions, budgets and savings goals.
-
-### TypeScript
-
-**TypeScript** will be used instead of plain JavaScript.
-
-Responsibilities:
-
-* providing static typing;
-* defining API models and DTO types;
-* reducing runtime errors;
-* improving maintainability of the frontend codebase.
-
-### Tailwind CSS
-
-**Tailwind CSS** will be used for styling the application.
-
-Responsibilities:
-
-* implementing the UI designed in Figma;
-* providing consistent spacing, colors and typography;
-* creating responsive layouts;
-* reducing the need for custom CSS.
-
-### Frontend API Communication
-
-The frontend will communicate with the ASP.NET Core Web API using HTTP requests and JSON.
-
-The frontend will consume REST API endpoints for:
-
-* authentication;
-* accounts;
-* transactions;
-* categories;
-* budgets;
-* savings goals;
-* dashboard data;
-* statistics;
-* What-If simulations.
-
----
-
-## Backend
-
-### C# / ASP.NET Core
-
-**C# with ASP.NET Core Web API** will be used to implement the backend.
-
-Responsibilities:
-
-* exposing REST API endpoints;
-* validating incoming requests;
-* implementing business logic;
-* handling authentication and authorization;
-* managing financial operations;
-* calculating statistics and financial projections;
-* communicating with PostgreSQL.
-
-The backend will be organized into separate application modules such as:
-
-```text
-Auth
-Accounts
-Transactions
-Categories
-Dashboard
-Statistics
-Budgets
-Savings Goals
-What-If Simulator
+```sh
+cd frontend
+npm ci
+npm run dev -- --port 3000
 ```
 
-### Entity Framework Core
+Current clean-install limitation: frontend source imports lucide-react, but it is
+missing from the frontend manifest and lockfile (it appears only in the root
+manifest). An existing node_modules directory can mask this. The dependency
+configuration must be fixed for reproducible frontend/Docker builds.
 
-**Entity Framework Core** will be used as the ORM.
+## Docker Compose
 
-Responsibilities:
+| Service | Container port | Host port |
+| --- | --- | --- |
+| postgres | 5432 | 5433 |
+| backend | 8080 | 8080 |
+| frontend (nginx) | 80 | 3000 |
 
-* mapping C# domain entities to database tables;
-* querying and modifying data;
-* managing relationships between entities;
-* creating and applying database migrations.
+Compose supplies the backend with a connection string using host postgres and
+stores database files in the postgres_data volume. The backend runtime is ASP.NET
+8; nginx serves the frontend with SPA routing fallback and no API proxy.
 
-### Npgsql
+A single fresh Compose startup is not self-initializing: depends_on does not check
+database readiness, and there is no migration job or automatic migration call.
+Start PostgreSQL, wait for it to accept connections, and apply migrations against
+that database before starting the API. The frontend dependency limitation above
+also affects the Docker build. HTTPS redirection is disabled in Program.cs.
 
-**Npgsql** will be used as the PostgreSQL provider for Entity Framework Core.
+## Verification
 
-It will provide communication between the ASP.NET Core backend and PostgreSQL database.
+Backend compilation:
 
-### REST API
-
-The backend will expose a RESTful API using JSON.
-
-Example:
-
-```text
-GET    /api/accounts
-POST   /api/accounts
-PUT    /api/accounts/{id}
-DELETE /api/accounts/{id}
-
-GET    /api/transactions
-POST   /api/transactions
-PUT    /api/transactions/{id}
-DELETE /api/transactions/{id}
-
-GET    /api/budgets
-POST   /api/budgets
-
-GET    /api/savings-goals
-POST   /api/savings-goals
-
-POST   /api/simulations
-POST   /api/simulations/{id}/run
+```sh
+dotnet build backend/backend.csproj
 ```
 
----
+Category integration tests against a running API using a disposable migrated database:
 
-## Database
-
-### PostgreSQL
-
-**PostgreSQL** will be used as the primary relational database.
-
-It will store persistent application data such as:
-
-* users;
-* financial accounts;
-* transactions;
-* categories;
-* budgets;
-* savings goals;
-* What-If scenarios.
-
-The database will use relational constraints and foreign keys to maintain data integrity.
-
-Financial amounts will be stored using an appropriate decimal type rather than floating-point values.
-
----
-
-## Containerization
-
-### Docker
-
-**Docker** will be used to containerize the application components and provide a consistent development environment.
-
-The main containers will be:
-
-```text
-React Frontend
-      │
-      ▼
-ASP.NET Core API
-      │
-      ▼
-PostgreSQL
+```sh
+node backend/tests/categories.integration.mjs http://localhost:8080
 ```
 
-### Docker Compose
-
-**Docker Compose** will be used to run the application services together during local development.
-
-The Compose environment will contain:
-
-```text
-frontend
-backend
-postgres
-```
-
-This will allow the entire application to be started using a single command.
-
----
-
-## Development and API Tools
-
-### Git
-
-**Git** will be used for version control.
-
-### GitHub
-
-**GitHub** will be used for:
-
-* source code hosting;
-* issue tracking;
-* project planning;
-* pull requests;
-* documenting development progress.
-
-### Swagger / OpenAPI
-
-**Swagger / OpenAPI** will be used to document and test the backend API during development.
-
-It will provide an interactive interface for inspecting available endpoints, request models and responses.
-
----
-
-## Testing
-
-Testing will be introduced at both backend and frontend levels.
-
-### Backend
-
-The backend will contain:
-
-* unit tests for business logic;
-* integration tests for API and database-related functionality.
-
-### Frontend
-
-The frontend will contain tests for important UI logic and components where appropriate.
-
----
-
-## Technology Summary
-
-| Area                | Technology                | Purpose                            |
-| ------------------- | ------------------------- | ---------------------------------- |
-| Frontend            | React                     | User interface                     |
-| Frontend language   | TypeScript                | Static typing                      |
-| Styling             | Tailwind CSS              | UI styling and responsive layout   |
-| Backend             | C# / ASP.NET Core Web API | REST API and business logic        |
-| ORM                 | Entity Framework Core     | Database access                    |
-| PostgreSQL provider | Npgsql                    | EF Core ↔ PostgreSQL communication |
-| Database            | PostgreSQL                | Persistent data storage            |
-| Containerization    | Docker                    | Application containers             |
-| Local orchestration | Docker Compose            | Running application services       |
-| API documentation   | Swagger / OpenAPI         | API documentation and testing      |
-| Version control     | Git                       | Source control                     |
-| Project management  | GitHub Issues / Projects  | Development planning and tracking  |
-| UI design           | Figma                     | Interface design and prototyping   |
+The script tests authentication, defaults, validation, CRUD, user isolation, and
+concurrent duplicate creation, and leaves its users/data in the test database.
+There is no backend unit-test project or financial-calculation suite yet.
+Frontend scripts provide build and lint checks; no frontend test script is defined.

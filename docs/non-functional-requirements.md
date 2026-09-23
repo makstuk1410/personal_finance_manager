@@ -1,5 +1,17 @@
 # Non-Functional Requirements
 
+The requirements below are quality targets, not a certification of current
+behavior. [Backend Status](backend-status.md) records the implementation baseline.
+
+Password hashing, JWT authorization, user-scoped account/category queries,
+decimal account balances, Swagger, database connectivity checking, and category
+integration tests are implemented. Input validation is partial. The backend has
+no transaction-processing/calculation modules, pagination, or separate business
+layer yet. Performance targets and browser/mobile compatibility are not established
+by the backend tests. The health endpoint currently exposes exception details;
+secret management and error sanitization still need work to meet the security
+and privacy targets below.
+
 ## 1. Security
 
 **NFR-01.1** The system shall store user passwords using a secure one-way password hashing algorithm.

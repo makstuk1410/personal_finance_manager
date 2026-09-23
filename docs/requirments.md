@@ -4,6 +4,16 @@ Personal Finance Manager is a web application that allows users to track income 
 
 This file is the documentation index. Detailed topics are split into separate documents for easier reading and maintenance.
 
+## Current Backend
+
+* [Backend Status](backend-status.md) - Implemented features, gaps, setup, and verification.
+* [API Design](api-design.md) - Current endpoint contracts and separately labeled proposals.
+* [Technology Stack](technology.md) - Actual dependencies, deployment, and development setup.
+
+The backend currently supports authentication, accounts, categories, and database
+health. Requirements and target architecture also cover planned modules; they
+should not be read as a list of completed features.
+
 ## Requirements
 
 * [Functional Requirements](functional-requirements.md) - MVP features and business behavior.

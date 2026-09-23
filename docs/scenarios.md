@@ -1,5 +1,10 @@
 # Scenarios
 
+These scenarios describe UI flows backed by the implemented authentication and
+account endpoints, plus explicit target behavior where noted. Registration has
+no backend password-strength/email-format validators; exact-match email checking
+is not protected by a database unique index. See [API Design](api-design.md).
+
 ## UC-01 — Register account
 
 **Main scenario:**
@@ -60,6 +65,8 @@
 4. The system redirects the user to the landing page.
 5. The user is no longer able to access protected application pages.
 
+This is client-side logout; it does not revoke the issued JWT at the backend.
+
 **Alternative scenario:**
 
 If the user is already unauthenticated, the system redirects them to the landing page or login page.
@@ -89,7 +96,9 @@ The new account appears in the user's list of accounts.
 
 **Alternative Scenarios:**
 
-If a required field is missing, the system displays a validation error and the account is not created.
+Missing/invalid name or currency produces a validation error. The current API
+defaults an omitted type to Cash and an omitted initial balance to zero; stronger
+required-field validation for those value types remains a target.
 If an entered value is invalid, the system displays a validation error and asks the user to correct the data.
 If the account cannot be created due to a system or database error, the system displays an error message and does not create the account.
 
@@ -139,7 +148,8 @@ The selected account belongs to the authenticated user.
 The user opens the Accounts page.
 The user selects an account to edit.
 The system displays the current account information.
-The user modifies one or more account fields.
+The user modifies the account name, type, or currency. Initial/current balances
+cannot be edited through this endpoint. Changing currency does not convert money.
 The user submits the changes.
 The system validates the updated data.
 The system updates the financial account.
@@ -158,7 +168,7 @@ The selected financial account contains the updated information.
 
 ---
 
-UC-07 — Delete account
+## UC-07 — Delete account
 
 **Preconditions:**
 
@@ -173,7 +183,7 @@ The user selects an account to delete.
 The system displays a confirmation request.
 The user confirms the deletion.
 The system verifies that the account belongs to the authenticated user.
-The system checks whether the account can be deleted according to the application's data integrity rules.
+There is currently no transaction-reference check because transactions are not implemented.
 The system deletes the account.
 The system confirms that the account was deleted successfully.
 The account is removed from the user's account list.
@@ -183,8 +193,9 @@ The account is removed from the user's account list.
 If the user cancels the confirmation, the account remains unchanged.
 If the selected account does not exist, the system displays an error message.
 If the selected account does not belong to the authenticated user, the system denies the operation.
-If the account cannot be deleted because it is referenced by existing financial data, the system informs the user and does not delete the account.
+Planned: define a deletion policy for accounts referenced by transactions when
+that module is implemented; this restriction is not currently enforced.
 If the deletion fails due to a system or database error, the system displays an error message and preserves the account.
 
 **Postcondition:**
-The selected financial account is no longer available to the user, unless the deletion was rejected by the system's data integrity rules.
+After a successful response, the selected financial account has been hard-deleted.

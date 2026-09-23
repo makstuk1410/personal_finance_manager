@@ -1,6 +1,34 @@
 # System Architecture
 
-## 1. Architecture Overview
+## Current implementation
+
+The backend is a single ASP.NET Core 8 Web API project. It currently implements
+authentication, financial accounts, categories, and database connectivity health.
+The remaining sections describe the **target architecture**, including modules
+and layer boundaries that have not yet been built.
+
+Current request paths:
+
+* Authentication: `AuthController → AuthService → AppDbContext → PostgreSQL`.
+* Accounts/categories: `Controller → AppDbContext → PostgreSQL`; ownership and
+  business checks live in the controllers, with category uniqueness also enforced
+  by database indexes.
+* Health: `HealthController → NpgsqlConnection → PostgreSQL`.
+
+`Models`, `DTOs`, `Controllers`, `Services`, `Data`, `Validation`, and `Migrations`
+are folders in one project. There are no separate Application, Domain, or
+Infrastructure assemblies, repository layer, or transaction-processing service.
+The current entities are `User`, `FinancialAccount`, and `Category`.
+
+JWT bearer middleware validates tokens; account queries filter by user ID and
+category queries include the user's custom rows plus shared defaults. Logout is
+client-side token removal. Swagger is enabled in all environments. Startup seeds
+a test user and requires an already-migrated database; it does not apply migrations.
+
+See [Backend Status](backend-status.md), [API Design](api-design.md), and
+[Database Design](database.md) for the implemented contracts and known gaps.
+
+## 1. Target Architecture Overview
 
 Personal Finance Manager will use a **modular monolith architecture**.
 
@@ -26,7 +54,7 @@ The main goal of the architecture is to keep the application modular, testable, 
 
 ---
 
-## 2. Backend Architecture
+## 2. Target Backend Architecture
 
 The backend will use a layered architecture.
 
@@ -118,7 +146,7 @@ The Infrastructure Layer implements technical details required by the Applicatio
 
 ---
 
-## 3. Application Modules
+## 3. Target Application Modules
 
 The backend will be divided into modules based on the application's functional areas.
 
@@ -241,7 +269,7 @@ The simulator must never modify actual financial data.
 
 ---
 
-## 4. Request Flow
+## 4. Target Request Flow
 
 A typical request will follow this flow:
 
@@ -326,7 +354,7 @@ The What-If Simulator uses actual financial data as the basis for hypothetical c
 
 ---
 
-## 6. Database Access
+## 6. Target Database Access
 
 The application will use **Entity Framework Core** for database access.
 
@@ -388,7 +416,7 @@ The same principle applies to:
 
 ---
 
-## 8. Transaction Processing
+## 8. Transaction Processing (planned)
 
 Transactions require special handling because they affect account balances.
 
@@ -416,7 +444,7 @@ If the operation fails, neither the transaction nor the balance update should be
 
 ---
 
-## 9. What-If Simulator Architecture
+## 9. What-If Simulator Architecture (planned)
 
 The What-If Simulator is separated from actual financial data modification.
 

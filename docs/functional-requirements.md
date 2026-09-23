@@ -1,5 +1,19 @@
 # Functional Requirements
 
+These are product requirements, including work that is not implemented yet. They
+remain targets even where the current backend falls short; see
+[Backend Status](backend-status.md) and [API Design](api-design.md).
+
+| Requirement area | Current backend status |
+| --- | --- |
+| Registration/authentication | Register, login, JWT, and current-user claim endpoint implemented; password policy and database email uniqueness remain missing |
+| Logout | Frontend clears the token; no backend logout/revocation endpoint |
+| Financial accounts (FR-03) | CRUD implemented; omitted type/balance defaults and unrestricted numeric enum input are current validation gaps |
+| Transactions (FR-04) | Planned; no endpoints or model |
+| Categories (FR-05.1–FR-05.4) | Shared defaults and private custom-category CRUD implemented in the backend |
+| Category assignment (FR-05.5) | Planned with the transaction module |
+| Financial summaries, statistics, budgets, savings goals, simulations | Planned; no backend endpoints or models |
+
 Personal Finance Manager is a web application that allows users to track their income and expenses, analyze their financial habits, set financial goals and budgets, and simulate future financial scenarios.
 
 ## 1. Authentication
