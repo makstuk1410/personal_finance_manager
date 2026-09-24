@@ -1,0 +1,8 @@
+.env
+.env.*
+!.env.example
+
+# Build output
+backend/bin/
+backend/obj/
+frontend/dist/
