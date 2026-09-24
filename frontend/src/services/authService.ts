@@ -46,6 +46,25 @@ export async function login(request: LoginRequest) {
     return response.json();
 }
 
+export async function exchangeOAuthCode(code: string) {
+    const response = await fetch(
+        "http://localhost:8080/api/auth/oauth/exchange",
+        {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ code }),
+        }
+    );
+
+    if (!response.ok) {
+        throw new Error(await response.text());
+    }
+
+    return response.json() as Promise<{ token: string }>;
+}
+
 export async function getCurrentUser() {
     const token = localStorage.getItem("token");
 

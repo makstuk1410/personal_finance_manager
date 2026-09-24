@@ -100,6 +100,18 @@ export default function LoginPage() {
                         <button type="submit">
                             Login
                         </button>
+
+                        <button
+                            type="button"
+                            className="google-login-button"
+                            onClick={() => {
+                                window.location.href =
+                                    "http://localhost:8080/api/auth/google";
+                            }}
+                        >
+                            <span className="google-icon" aria-hidden="true">G</span>
+                            <span>Continue with Google</span>
+                        </button>
                     </form>
                 </section>
             </main>

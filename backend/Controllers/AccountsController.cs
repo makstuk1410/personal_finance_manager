@@ -5,6 +5,7 @@ using backend.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 
 namespace backend.Controllers;
 
@@ -133,10 +134,10 @@ public class AccountsController : ControllerBase
 
         var userId = int.Parse(userIdClaim.Value);
 
-        var account = await _context.FinancialAccounts
-            .FirstOrDefaultAsync(a =>
-                a.Id == id &&
-                a.UserId == userId);
+        await using var databaseTransaction = await _context.Database.BeginTransactionAsync();
+        var rows = await _context.FinancialAccounts.FromSqlInterpolated(
+            $"SELECT * FROM \"FinancialAccounts\" WHERE \"Id\" = {id} AND \"UserId\" = {userId} FOR UPDATE").ToListAsync();
+        var account = rows.SingleOrDefault();
 
         if (account == null)
         {
@@ -145,10 +146,14 @@ public class AccountsController : ControllerBase
 
         account.Name = request.Name;
         account.Type = request.Type;
+        if (!string.Equals(account.Currency, request.Currency, StringComparison.OrdinalIgnoreCase) &&
+            await _context.Transactions.AnyAsync(t => t.SourceAccountId == id || t.DestinationAccountId == id))
+            return Conflict("Currency cannot be changed while the account has transactions.");
         account.Currency = request.Currency;
 
         await _context.SaveChangesAsync();
 
+        await databaseTransaction.CommitAsync();
         return NoContent();
     }
 
@@ -176,7 +181,9 @@ public class AccountsController : ControllerBase
 
         _context.FinancialAccounts.Remove(account);
 
-        await _context.SaveChangesAsync();
+        try { await _context.SaveChangesAsync(); }
+        catch (DbUpdateException ex) when (ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.ForeignKeyViolation })
+        { return Conflict("This account is used by a transaction and cannot be deleted."); }
 
         return NoContent();
     }

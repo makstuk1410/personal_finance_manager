@@ -93,6 +93,54 @@ public class AuthService
         };
     }
 
+    public async Task<LoginResponse> LoginWithExternalProviderAsync(
+        string provider,
+        string providerSubjectId,
+        string email)
+    {
+        var externalLogin = await _context.ExternalLogins
+            .Include(login => login.User)
+            .SingleOrDefaultAsync(login =>
+                login.Provider == provider &&
+                login.ProviderSubjectId == providerSubjectId);
+
+        User user;
+
+        if (externalLogin != null)
+        {
+            user = externalLogin.User;
+        }
+        else
+        {
+            user = await _context.Users.FirstOrDefaultAsync(candidate => candidate.Email == email)
+                ?? new User
+                {
+                    Email = email,
+                    PasswordHash = string.Empty,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+            if (user.Id == 0)
+            {
+                await _context.Users.AddAsync(user);
+            }
+
+            await _context.ExternalLogins.AddAsync(new ExternalLogin
+            {
+                User = user,
+                Provider = provider,
+                ProviderSubjectId = providerSubjectId
+            });
+
+            await _context.SaveChangesAsync();
+        }
+
+        return new LoginResponse
+        {
+            Token = GenerateJwtToken(user)
+        };
+    }
+
     private string GenerateJwtToken(User user)
     {
         var jwtKey = _configuration["Jwt:Key"]

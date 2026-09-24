@@ -9,4 +9,6 @@ public class User
     public string PasswordHash { get; set; } = null!;
 
     public DateTime CreatedAt { get; set; }
+
+    public ICollection<ExternalLogin> ExternalLogins { get; set; } = new List<ExternalLogin>();
 }

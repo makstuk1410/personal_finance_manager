@@ -17,6 +17,9 @@ services:
     container_name: personal-finance-backend
     environment:
       ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=personal_finance;Username=postgres;Password=postgres"
+      OAuth__Google__ClientId: "${GOOGLE_CLIENT_ID:-}"
+      OAuth__Google__ClientSecret: "${GOOGLE_CLIENT_SECRET:-}"
+      OAuth__FrontendUrl: "http://localhost:3000"
     ports:
       - "8080:8080"
     depends_on:

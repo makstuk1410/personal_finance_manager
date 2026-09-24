@@ -131,6 +131,11 @@ public class CategoriesController : ControllerBase
             return NotFound();
         }
 
+        catch (DbUpdateException ex) when (ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.ForeignKeyViolation })
+        {
+            return Conflict("This category is used by a transaction and cannot be deleted.");
+        }
+
         return NoContent();
     }
 

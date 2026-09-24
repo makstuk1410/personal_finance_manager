@@ -15,9 +15,42 @@ public class AppDbContext : DbContext
     public DbSet<FinancialAccount> FinancialAccounts => Set<FinancialAccount>();
 
     public DbSet<Category> Categories => Set<Category>();
+    public DbSet<Transaction> Transactions => Set<Transaction>();
+    public DbSet<ExternalLogin> ExternalLogins => Set<ExternalLogin>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<ExternalLogin>(entity =>
+        {
+            entity.Property(login => login.Provider).HasMaxLength(50).IsRequired();
+            entity.Property(login => login.ProviderSubjectId).HasMaxLength(200).IsRequired();
+            entity.HasIndex(login => new { login.Provider, login.ProviderSubjectId }).IsUnique();
+            entity.HasOne(login => login.User)
+                .WithMany(user => user.ExternalLogins)
+                .HasForeignKey(login => login.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        var transaction = modelBuilder.Entity<Transaction>();
+        transaction.Property(t => t.Amount).HasColumnType("numeric(18,2)");
+        transaction.Property(t => t.Type).HasConversion<string>();
+        transaction.Property(t => t.Description).HasMaxLength(500);
+        transaction.HasOne<User>().WithMany().HasForeignKey(t => t.UserId).OnDelete(DeleteBehavior.Restrict);
+        transaction.HasOne<FinancialAccount>().WithMany().HasForeignKey(t => t.SourceAccountId).OnDelete(DeleteBehavior.Restrict);
+        transaction.HasOne<FinancialAccount>().WithMany().HasForeignKey(t => t.DestinationAccountId).OnDelete(DeleteBehavior.Restrict);
+        transaction.HasOne<Category>().WithMany().HasForeignKey(t => t.CategoryId).OnDelete(DeleteBehavior.Restrict);
+        transaction.HasIndex(t => new { t.UserId, t.Date });
+        transaction.ToTable("Transactions", table =>
+        {
+            table.HasCheckConstraint("CK_Transactions_Amount", "\"Amount\" > 0");
+            table.HasCheckConstraint("CK_Transactions_Shape", """
+                ("Type" = 'Income' AND "SourceAccountId" IS NULL AND "DestinationAccountId" IS NOT NULL)
+                OR ("Type" = 'Expense' AND "SourceAccountId" IS NOT NULL AND "DestinationAccountId" IS NULL AND "CategoryId" IS NOT NULL)
+                OR ("Type" = 'Transfer' AND "SourceAccountId" IS NOT NULL AND "DestinationAccountId" IS NOT NULL
+                    AND "SourceAccountId" <> "DestinationAccountId" AND "CategoryId" IS NULL)
+                """);
+        });
+
         var category = modelBuilder.Entity<Category>();
         category.Property(c => c.Name).HasMaxLength(100).IsRequired();
         category.Property(c => c.NormalizedName).HasMaxLength(100).IsRequired();

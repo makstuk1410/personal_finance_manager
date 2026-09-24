@@ -9,6 +9,7 @@ import {
 import {
     login as loginRequest,
     getCurrentUser,
+    exchangeOAuthCode,
 } from "../services/authService";
 
 type User = {
@@ -20,6 +21,7 @@ type AuthContextType = {
     isAuthenticated: boolean;
     isLoading: boolean;
     login: (email: string, password: string) => Promise<void>;
+    loginWithOAuthCode: (code: string) => Promise<void>;
     logout: () => void;
 };
 
@@ -65,6 +67,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(currentUser);
     }
 
+    async function loginWithOAuthCode(code: string) {
+        const result = await exchangeOAuthCode(code);
+
+        localStorage.setItem("token", result.token);
+
+        const currentUser = await getCurrentUser();
+        setUser(currentUser);
+    }
+
     function logout() {
         localStorage.removeItem("token");
         setUser(null);
@@ -77,6 +88,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 isAuthenticated: user !== null,
                 isLoading,
                 login,
+                loginWithOAuthCode,
                 logout,
             }}
         >

@@ -189,3 +189,26 @@
         width: 100%;
     }
 }
+
+.login-form-container .google-login-button {
+    width: 220px;
+    margin-top: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: #ffffff;
+    border: 1px solid #dbe2ea;
+    color: #0f172a;
+}
+
+.google-icon {
+    color: #4285f4;
+    font-size: 17px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.login-form-container .google-login-button:hover {
+    background: #f8fafc;
+}
