@@ -1,3 +1,5 @@
+import { API_URL } from "./api";
+
 export interface RegisterRequest {
     email: string;
     password: string;
@@ -12,7 +14,7 @@ export interface LoginRequest {
 export async function register(
     request: RegisterRequest
 ) {
-    const response = await fetch("http://localhost:8080/api/auth/register", {
+    const response = await fetch(`${API_URL}/auth/register`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
@@ -29,7 +31,7 @@ export async function register(
 
 export async function login(request: LoginRequest) {
     const response = await fetch(
-        "http://localhost:8080/api/auth/login",
+        `${API_URL}/auth/login`,
         {
             method: "POST",
             headers: {
@@ -48,7 +50,7 @@ export async function login(request: LoginRequest) {
 
 export async function exchangeOAuthCode(code: string) {
     const response = await fetch(
-        "http://localhost:8080/api/auth/oauth/exchange",
+        `${API_URL}/auth/oauth/exchange`,
         {
             method: "POST",
             headers: {
@@ -69,7 +71,7 @@ export async function getCurrentUser() {
     const token = localStorage.getItem("token");
 
     const response = await fetch(
-        "http://localhost:8080/api/auth/me",
+        `${API_URL}/auth/me`,
         {
             headers: {
                 Authorization: `Bearer ${token}`,

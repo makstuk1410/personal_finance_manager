@@ -106,7 +106,7 @@ export default function LoginPage() {
                             className="google-login-button"
                             onClick={() => {
                                 window.location.href =
-                                    "http://localhost:8080/api/auth/google";
+                                    `${import.meta.env.VITE_API_URL ?? "http://localhost:8080/api"}/auth/google`;
                             }}
                         >
                             <span className="google-icon" aria-hidden="true">G</span>

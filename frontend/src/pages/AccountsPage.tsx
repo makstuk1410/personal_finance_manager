@@ -28,7 +28,7 @@ interface AccountFormData {
     currency: string;
 }
 
-const API_URL = "http://localhost:8080/api";
+const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8080/api";
 
 const accountTypeLabels: Record<Account["type"], string> = {
     Cash: "Cash",

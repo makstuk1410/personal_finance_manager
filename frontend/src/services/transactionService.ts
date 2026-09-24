@@ -12,7 +12,7 @@ export interface Transaction extends TransactionInput { id: number; }
 export interface AccountOption { id: number; name: string; currency: string; balance: number; }
 
 async function request<T>(path: string, method = "GET", body?: TransactionInput): Promise<T> {
-    const response = await fetch(`http://localhost:8080/api/${path}`, {
+    const response = await fetch(`${import.meta.env.VITE_API_URL ?? "http://localhost:8080/api"}/${path}`, {
         method,
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}`,
             ...(body ? { "Content-Type": "application/json" } : {}) },
